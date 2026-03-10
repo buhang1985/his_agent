@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Lock files (keep bun.lock if using Bun)
+# package-lock.json
+# yarn.lock
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OpenSpec runtime
+.openspec/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Cache
+.cache/
+.parcel-cache/
