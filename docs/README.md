@@ -52,7 +52,8 @@ docs/
 └── manual/                      # 操作手册
     ├── developer-guide.md      # 开发者指南
     ├── deployment-guide.md     # 部署指南
-    └── api-integration.md      # API 集成指南
+    ├── git-workflow.md         # Git 工作流
+    └── security-guide.md       # 安全规范指南
 ```
 
 ## 文档规范
@@ -149,6 +150,7 @@ npm run test:coverage
 | 测试报告 | 每次测试生成新报告 |
 | 架构文档 | 重大变更时更新 |
 | 数据库脚本 | 随 schema 变更更新 (Flyway 版本化) |
+| 安全规范 | 随安全策略更新 |
 
 ## 参考资料
 
