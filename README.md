@@ -289,6 +289,18 @@ VITE_WS_URL=ws://localhost:8080/ws
 
 MIT License - 详见 [LICENSE](LICENSE) 文件
 
+## 文档中心
+
+完整文档请访问：[docs/](docs/)
+
+| 文档类型 | 路径 | 说明 |
+|----------|------|------|
+| 📚 API 文档 | [docs/api/](docs/api/) | 后端/前端 API 接口文档 |
+| 📋 用例文档 | [docs/use-cases/](docs/use-cases/) | 功能用例说明 |
+| 🧪 测试报告 | [docs/test-reports/](docs/test-reports/) | 单元测试/集成测试报告 |
+| 🏗️ 架构文档 | [docs/architecture/](docs/architecture/) | 系统架构/技术栈说明 |
+| 📖 开发者指南 | [docs/manual/](docs/manual/) | 开发规范/部署指南 |
+
 ## 联系方式
 
 - 项目仓库：https://github.com/buhang1985/his_agent
