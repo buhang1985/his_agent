@@ -1,0 +1,34 @@
+# 测试环境配置
+spring:
+  # 使用 H2 内存数据库进行测试
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  # Flyway 配置
+  flyway:
+    enabled: false
+
+# Spring AI 配置 (测试时使用 mock)
+spring.ai:
+  openai:
+    api-key: test-api-key
+  anthropic:
+    api-key: test-api-key
+
+# 日志配置
+logging:
+  level:
+    root: WARN
+    com.hisagent: DEBUG

@@ -2,41 +2,49 @@
   "name": "his-agent-frontend",
   "version": "0.1.0",
   "type": "module",
-  "description": "医疗 AI 助手 - 前端界面",
+  "description": "医疗 AI 助手 - 前端界面 (Vue 3)",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --ext ts,tsx --fix",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint . --ext .vue,.ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext .vue,.ts,.tsx --fix",
+    "typecheck": "vue-tsc --noEmit"
   },
   "keywords": [
     "medical",
     "ai",
     "his",
-    "healthcare"
+    "healthcare",
+    "vue"
   ],
   "author": "buhang1985",
   "license": "MIT",
   "dependencies": {
-    "@ai-sdk/openai": "^1.0.0",
-    "ai": "^4.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zustand": "^5.0.0"
+    "vue": "^3.5.0",
+    "vue-router": "^4.4.0",
+    "pinia": "^2.2.0",
+    "axios": "^1.7.0",
+    "element-plus": "^2.8.0",
+    "@element-plus/icons-vue": "^2.3.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.0",
+    "@vue/test-utils": "^2.4.0",
     "@types/node": "^22.0.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
-    "@vitejs/plugin-react": "^4.3.0",
+    "@vue/eslint-config-typescript": "^14.0.0",
     "eslint": "^9.0.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.0",
+    "eslint-plugin-vue": "^9.28.0",
     "typescript": "^5.6.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vue-tsc": "^2.1.0",
+    "vitest": "^2.1.0",
+    "jsdom": "^25.0.0",
+    "happy-dom": "^15.0.0"
   }
 }

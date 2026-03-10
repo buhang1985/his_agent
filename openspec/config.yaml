@@ -1,15 +1,13 @@
 schema: spec-driven
 
 # 项目上下文
-# 在创建工件时向 AI 显示此信息。
 context: |
   ## 项目定位
   his_agent 是一个嵌入现有医院信息系统 (HIS) 的医疗 AI 助手，通过 Web 页面嵌入方式 (iframe) 集成到 HIS 系统中。
 
   ## 技术栈
-  - **后端**: Java 17+ / Spring Boot 3.x
-  - **前端**: React 18+ / TypeScript 5+ / Vite 6+
-  - **构建工具**: Maven 3.9+ (后端) / Vite (前端)
+  - **后端**: Java 17+ / Spring Boot 3.x / Maven 3.9+
+  - **前端**: Vue 3.4+ / TypeScript 5+ / Vite 6+
   - **API 风格**: RESTful API + WebSocket (实时语音流)
   - **LLM 集成**: Spring AI 框架，支持云端 API (Qwen/Claude) 和本地部署 (Ollama/vLLM) 双模式
   - **语音识别**: Deepgram (云端) / Whisper.cpp (本地)
@@ -29,9 +27,10 @@ context: |
 
   ## 开发约定
   - 使用约定式提交 (Conventional Commits)
-  - 后端遵循 Spring Boot 最佳实践，使用 Lombok 简化代码
-  - 前端使用 TypeScript 严格模式，所有组件必须有类型定义
-  - 医疗相关功能需要安全审查和测试覆盖
+  - **后端**: Spring Boot 最佳实践，Lombok 简化代码，JUnit 5 单元测试
+  - **前端**: Vue 3 Composition API，TypeScript 严格模式，Vitest 单元测试
+  - **测试要求**: 每个功能模块必须有单元测试，核心业务逻辑测试覆盖率 ≥ 80%
+  - **任务执行**: 串行执行，每个任务必须测试通过后才能执行下一个任务
   - API 接口必须有 Swagger/OpenAPI 文档
 
 # 每个工件的规则
@@ -48,3 +47,5 @@ rules:
     - 将任务分解为最多 4 小时的块
     - 每个任务必须有明确的验收标准
     - 标注任务依赖关系
+    - **必须包含单元测试要求**
+    - **必须等待上个任务测试通过后才能执行下一个**
