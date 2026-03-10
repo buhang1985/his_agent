@@ -1,8 +1,9 @@
 # 技术栈规格说明
 
-**版本**: 1.0  
+**版本**: 2.0  
 **日期**: 2026-03-10  
-**状态**: 已批准
+**状态**: 已批准  
+**变更**: 调整为 Java + 前后端分离架构
 
 ---
 
@@ -14,144 +15,482 @@
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │                    iframe 嵌入区域                       │    │
 │  │  ┌───────────────────────────────────────────────────┐  │    │
-│  │  │           his_agent Web 应用                       │  │    │
+│  │  │     his_agent Frontend (React + TypeScript)       │  │    │
 │  │  │  ┌─────────┐ ┌─────────┐ ┌─────────────────────┐  │  │    │
 │  │  │  │ 语音录入 │ │ 诊断建议 │ │   病历生成/展示     │  │  │    │
 │  │  │  └─────────┘ └─────────┘ └─────────────────────┘  │  │    │
-│  │  │                       │                            │  │    │
-│  │  │  ┌────────────────────┴────────────────────────┐  │  │    │
-│  │  │  │           LLM 抽象层                         │  │  │    │
-│  │  │  └────────────────────┬────────────────────────┘  │  │    │
 │  │  └───────────────────────────────────────────────────┘  │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                              │                                   │
-│                    postMessage 通信                              │
+│                    REST API / WebSocket                          │
 └──────────────────────────────┼──────────────────────────────────┘
                                │
                     ┌──────────┴──────────┐
                     ▼                     ▼
            ┌────────────────┐   ┌────────────────┐
-           │   云端 LLM API  │   │  本地 LLM 服务  │
-           │  (Claude/GPT)  │   │ (Ollama/vLLM)  │
+           │  Spring Boot   │   │  本地 LLM 服务  │
+           │  后端服务       │   │ (Ollama/vLLM)  │
            └────────────────┘   └────────────────┘
 ```
 
 ---
 
-## 技术选型
+## 核心栈
 
-### 核心栈
+### 后端
 
 | 层级 | 技术 | 版本 | 理由 |
 |------|------|------|------|
-| 运行时 | Node.js | 20+ LTS | 企业级支持，生态成熟 |
-| 语言 | TypeScript | 5+ | 类型安全，减少医疗应用运行时错误 |
-| 前端框架 | React | 18+ | 组件化开发，生态丰富 |
-| 构建工具 | Vite | 5+ | 快速开发体验，生产优化 |
+| 语言 | Java | 17+ | LTS 版本，企业级支持 |
+| 框架 | Spring Boot | 3.4.x | 约定优于配置，生态完善 |
+| LLM 集成 | Spring AI | 1.0.0-M5+ | 统一 LLM 接口，支持多 provider |
+| 构建工具 | Maven | 3.9+ | 依赖管理成熟 |
+| 数据库 | MySQL | 8+ | 关系型数据存储 |
+| 迁移工具 | Flyway | 10+ | 版本化数据库迁移 |
+| API 文档 | SpringDoc OpenAPI | 2.7+ | Swagger UI 自动生成 |
 
-### 语音识别方案对比
+### 前端
 
-| 方案 | 优势 | 劣势 | 推荐场景 |
-|------|------|------|----------|
-| **Web Speech API** | 浏览器原生，无需额外依赖 | 医学术语识别率低，依赖浏览器 | 快速原型 |
-| **Whisper (本地)** | 开源，可自定义医学词表，数据不出院 | 需要 GPU/较好 CPU | 私有化部署 |
-| **Azure Speech** | 中文支持好，可定制语音模型 | 数据出云，成本较高 | 云端部署 |
-| **讯飞/百度语音** | 中文医学术语优化 | API 成本，数据合规 | 国内云端部署 |
+| 层级 | 技术 | 版本 | 理由 |
+|------|------|------|------|
+| 语言 | TypeScript | 5+ | 类型安全 |
+| 框架 | React | 18+ | 组件化开发 |
+| 构建工具 | Vite | 6+ | 快速开发体验 |
+| 状态管理 | Zustand | 5+ | 轻量级状态管理 |
 
-**推荐方案**: 支持双模式
-- **开发/云端模式**: Azure Speech / 讯飞 (快速上线)
-- **私有化模式**: Whisper.cpp + 自定义医学词表 (数据合规)
+### 外部服务
 
-### LLM 集成方案
-
-| 组件 | 推荐库 | 理由 |
-|------|--------|------|
-| **LLM 抽象层** | Vercel AI SDK | 统一接口，支持多 provider，TypeScript 友好 |
-| **本地部署** | Ollama | 一键部署，支持 Qwen/ChatGLM 等国产模型 |
-| **RAG 框架** | LangChain.js / LlamaIndex | 医学知识库检索，引用溯源 |
-| **向量数据库** | Chroma / Faiss | 本地运行，医学文献存储 |
-
-### 支持的大模型
-
-| 类型 | 模型 | 接入方式 |
+| 服务 | 技术 | 部署方式 |
 |------|------|----------|
-| **云端** | Claude API | Vercel AI SDK |
-| **云端** | GPT-4 API | Vercel AI SDK |
-| **云端** | 通义千问 API | 阿里云百炼平台 |
-| **云端** | ChatGLM API | 智谱 AI 开放平台 |
-| **本地** | Qwen-72B | Ollama / vLLM |
-| **本地** | Llama-3-70B | Ollama / vLLM |
-| **本地** | ChatGLM3-6B | Ollama |
+| 语音识别 | Deepgram Nova-3 Medical | 云端 API |
+| 语音识别 | Whisper.cpp | 本地部署 |
+| LLM | Qwen (通义千问) | 阿里云 API |
+| LLM | Claude | Anthropic API |
+| LLM | Qwen2.5/Llama3 | Ollama 本地部署 |
+| 向量检索 | Milvus | 可选，用于 RAG |
 
 ---
 
-## HIS 集成方案
+## 后端架构
 
-### iframe 嵌入规范
+### 分层架构
 
-```html
-<!-- HIS 系统侧嵌入代码示例 -->
-<iframe 
-  src="https://his-agent.internal/" 
-  sandbox="allow-scripts allow-same-origin allow-microphone"
-  style="width: 400px; height: 100%; border: none;"
-  title="医疗 AI 助手"
-></iframe>
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Controller Layer                            │
+│  - REST API 端点                                                 │
+│  - WebSocket 处理器                                              │
+│  - 请求验证                                                      │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       Service Layer                              │
+│  - 业务逻辑                                                      │
+│  - 事务管理                                                      │
+│  - AI 服务编排                                                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Repository Layer                            │
+│  - 数据访问 (JPA)                                                │
+│  - 数据库操作                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### postMessage 通信协议
+### 核心模块
+
+```
+com.hisagent/
+├── controller/          # REST 控制器
+│   ├── ConsultationController.java
+│   ├── SpeechController.java
+│   └── HisIntegrationController.java
+├── service/             # 业务服务
+│   ├── ConsultationService.java
+│   ├── SoapNoteGenerationService.java
+│   └── DiagnosisSuggestionService.java
+├── repository/          # 数据访问
+│   ├── ConsultationRepository.java
+│   └── PatientRepository.java
+├── model/               # JPA 实体
+│   ├── Consultation.java
+│   └── SoapNote.java
+├── dto/                 # 数据传输对象
+│   ├── request/
+│   └── response/
+├── ai/                  # AI 服务集成
+│   ├── LlmProviderRegistry.java
+│   ├── SoapNoteGenerator.java
+│   └── DiagnosisSuggester.java
+├── config/              # 配置类
+│   ├── SecurityConfig.java
+│   └── WebConfig.java
+└── exception/           # 异常处理
+    ├── GlobalExceptionHandler.java
+    └── BusinessException.java
+```
+
+---
+
+## API 设计
+
+### RESTful API 规范
+
+```yaml
+openapi: 3.0.3
+info:
+  title: his_agent API
+  version: 0.1.0
+
+paths:
+  /api/v1/consultations:
+    post:
+      summary: 创建问诊会话
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConsultationRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsultationResponse'
+    
+    get:
+      summary: 获取问诊列表
+      parameters:
+        - name: patientId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsultationResponse'
+
+  /api/v1/consultations/{id}/transcribe:
+    post:
+      summary: 语音转写
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                audio:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranscriptionResponse'
+
+  /api/v1/consultations/{id}/generate-soap:
+    post:
+      summary: 生成 SOAP 病历
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SOAPNoteResponse'
+```
+
+### WebSocket 通信
+
+```java
+// WebSocket 配置示例
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+    
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+    }
+    
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        registry.enableSimpleBroker("/topic");
+        registry.setApplicationDestinationPrefixes("/app");
+    }
+}
+```
+
+---
+
+## 前端架构
+
+### 组件结构
+
+```
+his_agent-frontend/
+├── src/
+│   ├── components/
+│   │   └── VoiceConsultation/
+│   │       ├── VoiceConsultation.tsx    # 主容器
+│   │       ├── VoiceInput.tsx           # 语音录入
+│   │       ├── TranscriptView.tsx       # 转写展示
+│   │       ├── SOAPNoteEditor.tsx       # 病历编辑
+│   │       ├── DiagnosisPanel.tsx       # 诊断建议
+│   │       └── PatientInfoBanner.tsx    # 患者信息
+│   ├── hooks/
+│   │   ├── useVoiceConsultation.ts
+│   │   ├── useMedicalSpeechRecognition.ts
+│   │   └── useSOAPNoteGenerator.ts
+│   ├── services/
+│   │   ├── api.ts              # API 客户端
+│   │   ├── speech.ts           # 语音服务
+│   │   └── websocket.ts        # WebSocket 服务
+│   ├── stores/
+│   │   └── consultationStore.ts # Zustand 状态
+│   └── types/
+│       └── medical.ts          # 医疗类型定义
+```
+
+### API 客户端
 
 ```typescript
-// his_agent → HIS
-interface HISMessage {
-  type: 'PATIENT_INFO' | 'SAVE_RECORD' | 'OPEN_RECORD';
-  payload: {
-    patientId?: string;
-    recordData?: MedicalRecord;
-    recordId?: string;
-  };
-}
+// src/services/api.ts
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
-// HIS → his_agent
-interface AgentMessage {
-  type: 'PATIENT_UPDATED' | 'RECORD_SAVED' | 'ERROR';
-  payload: unknown;
+export const api = {
+  // 创建问诊会话
+  async createConsultation(patientId: string) {
+    const response = await fetch(`${API_BASE_URL}/v1/consultations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ patientId }),
+    });
+    return response.json();
+  },
+  
+  // 语音转写
+  async transcribeAudio(consultationId: string, audioBlob: Blob) {
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    
+    const response = await fetch(
+      `${API_BASE_URL}/v1/consultations/${consultationId}/transcribe`,
+      { method: 'POST', body: formData }
+    );
+    return response.json();
+  },
+  
+  // 生成 SOAP 病历
+  async generateSoapNote(consultationId: string, transcript: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/v1/consultations/${consultationId}/generate-soap`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript }),
+      }
+    );
+    return response.json();
+  },
+};
+```
+
+---
+
+## 数据模型
+
+### 核心实体
+
+```java
+// Consultation.java - 问诊会话实体
+@Entity
+@Table(name = "consultations")
+public class Consultation {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    
+    @Column(nullable = false)
+    private String patientId;
+    
+    @Enumerated(EnumType.STRING)
+    private ConsultationStatus status;
+    
+    @Column(columnDefinition = "TEXT")
+    private String transcript;
+    
+    @OneToOne(cascade = CascadeType.ALL)
+    private SoapNote soapNote;
+    
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<DiagnosisSuggestion> diagnosisSuggestions;
+    
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}
+```
+
+```java
+// SoapNote.java - SOAP 病历实体
+@Entity
+@Table(name = "soap_notes")
+public class SoapNote {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    
+    @Column(columnDefinition = "JSON")
+    private SubjectiveData subjective;
+    
+    @Column(columnDefinition = "JSON")
+    private ObjectiveData objective;
+    
+    @Column(columnDefinition = "JSON")
+    private AssessmentData assessment;
+    
+    @Column(columnDefinition = "JSON")
+    private PlanData plan;
+    
+    private Boolean reviewed = false;
+    private String reviewedBy;
+    private LocalDateTime reviewedAt;
 }
 ```
 
 ---
 
-## 项目结构
+## 安全与合规
+
+### Spring Security 配置
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws SecurityException {
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/**").authenticated()
+                .requestMatchers("/ws/**").authenticated()
+                .anyRequest().permitAll()
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        return http.build();
+    }
+}
+```
+
+### 数据安全
+
+| 措施 | 实现 |
+|------|------|
+| **传输加密** | HTTPS/TLS |
+| **认证授权** | JWT + OAuth2 |
+| **审计日志** | Spring AOP 拦截 |
+| **PII 脱敏** | 数据脱敏过滤器 |
+| **紧急重定向** | 关键词检测拦截器 |
+
+---
+
+## 部署架构
+
+### 开发环境
 
 ```
-his_agent/
-├── src/
-│   ├── components/          # React 组件
-│   │   ├── VoiceInput/      # 语音录入组件
-│   │   ├── DiagnosisPanel/  # 诊断建议面板
-│   │   ├── RecordEditor/    # 病历编辑器
-│   │   └── KnowledgeBase/   # 医学知识查询
-│   ├── hooks/               # React Hooks
-│   ├── services/            # 外部服务集成
-│   │   ├── llm/             # LLM 抽象层
-│   │   ├── speech/          # 语音识别服务
-│   │   └── his/             # HIS 通信服务
-│   ├── stores/              # 状态管理 (Zustand)
-│   ├── types/               # TypeScript 类型定义
-│   └── utils/               # 工具函数
-├── openspec/
-│   ├── config.yaml          # OpenSpec 配置
-│   ├── specs/               # 能力规格说明
-│   └── changes/             # 变更工件
-├── package.json
-└── tsconfig.json
+┌──────────────┐     ┌──────────────┐
+│   Frontend   │     │   Backend    │
+│   (Vite)     │────▶│ (Spring Boot)│
+│ localhost:3k │     │ localhost:8k │
+└──────────────┘     └──────┬───────┘
+                            │
+                            ▼
+                     ┌──────────────┐
+                     │    MySQL     │
+                     │  localhost   │
+                     └──────────────┘
+```
+
+### 生产环境
+
+```
+┌──────────────┐     ┌──────────────┐
+│   Nginx      │     │   Frontend   │
+│   (Reverse   │────▶│   (Static)   │
+│    Proxy)    │     │              │
+└──────┬───────┘     └──────────────┘
+       │
+       ▼
+┌──────────────┐     ┌──────────────┐
+│  Spring Boot │────▶│    MySQL     │
+│  (Cluster)   │     │  (Primary)   │
+└──────┬───────┘     └──────────────┘
+       │
+       ▼
+┌──────────────┐
+│    Ollama    │
+│  (Local LLM) │
+└──────────────┘
 ```
 
 ---
 
-## 下一步
+## 开发环境搭建
 
-1. **确认技术选型** - 语音识别和 LLM 供应商选择
-2. **创建项目脚手架** - 初始化 React + TypeScript + Vite
-3. **定义第一个 Spec** - 智能问诊功能详细规格
-4. **开发环境搭建** - 本地 LLM (Ollama) 配置
+### 后端
+
+```bash
+cd his_agent-backend
+
+# 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件
+
+# 启动 MySQL (Docker)
+docker run -d --name mysql \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=his_agent \
+  -p 3306:3306 \
+  mysql:8
+
+# 构建并启动
+mvn clean install
+mvn spring-boot:run
+```
+
+### 前端
+
+```bash
+cd his_agent-frontend
+
+# 安装依赖
+npm install
+
+# 配置环境变量
+cp .env.example .env
+
+# 启动开发服务器
+npm run dev
+```
+
+---
+
+## 参考资料
+
+- [Spring AI 文档](https://docs.spring.io/spring-ai/reference/)
+- [Spring Boot 最佳实践](https://spring.io/projects/spring-boot)
+- [Vercel AI SDK](https://sdk.vercel.ai/docs)
+- [Deepgram Medical](https://deepgram.com/solutions/medical-transcription)

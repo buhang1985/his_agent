@@ -1,8 +1,8 @@
 {
-  "name": "his_agent",
+  "name": "his-agent-frontend",
   "version": "0.1.0",
   "type": "module",
-  "description": "医疗 AI 助手 - 嵌入 HIS 系统的智能诊疗辅助工具",
+  "description": "医疗 AI 助手 - 前端界面",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -20,7 +20,6 @@
   "author": "buhang1985",
   "license": "MIT",
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
     "ai": "^4.0.0",
     "react": "^18.3.1",

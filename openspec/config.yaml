@@ -7,30 +7,32 @@ context: |
   his_agent 是一个嵌入现有医院信息系统 (HIS) 的医疗 AI 助手，通过 Web 页面嵌入方式 (iframe) 集成到 HIS 系统中。
 
   ## 技术栈
-  - **运行时**: Node.js 20+
-  - **语言**: TypeScript 5+ (严格模式)
-  - **前端框架**: React 18+ with Hooks
-  - **构建工具**: Vite
-  - **UI 组件**: 待定 (推荐 shadcn/ui 或 Ant Design)
-  - **状态管理**: 待定 (Zustand/Jotai/Context)
-  - **LLM 集成**: 支持云端 API (Claude/GPT/国产模型) 和本地部署 (Ollama/vLLM) 双模式
+  - **后端**: Java 17+ / Spring Boot 3.x
+  - **前端**: React 18+ / TypeScript 5+ / Vite 6+
+  - **构建工具**: Maven 3.9+ (后端) / Vite (前端)
+  - **API 风格**: RESTful API + WebSocket (实时语音流)
+  - **LLM 集成**: Spring AI 框架，支持云端 API (Qwen/Claude) 和本地部署 (Ollama/vLLM) 双模式
+  - **语音识别**: Deepgram (云端) / Whisper.cpp (本地)
+  - **数据库**: MySQL 8+ (业务数据) / Milvus (向量检索，可选)
 
   ## 核心功能
   1. **智能问诊** - 通过麦克风录入医患对话，实时转写生成结构化病历
   2. **诊断建议** - 基于症状和病史提供鉴别诊断参考
-  3. **病历生成** - 自动生成符合医疗规范的结构化电子病历
+  3. **病历生成** - 自动生成符合医疗规范的结构化电子病历 (SOAP 格式)
   4. **医学知识查询** - 快速检索药品信息、疾病指南、相互作用检查
 
   ## 技术约束
-  - **语音录入**: 需要支持中文医学术语的语音识别 (Web Speech API / Whisper / 云服务)
-  - **HIS 集成**: 通过 postMessage 与宿主 HIS 系统安全通信
+  - **语音录入**: 前端 Web Speech API + 后端 Whisper 双模式
+  - **HIS 集成**: 前端通过 postMessage 与宿主 HIS 系统安全通信
   - **部署灵活**: 支持云端 LLM 和本地私有化部署两种模式
   - **数据安全**: 患者数据不出院内，符合医疗数据合规要求
 
   ## 开发约定
   - 使用约定式提交 (Conventional Commits)
-  - 所有功能模块必须有类型定义
+  - 后端遵循 Spring Boot 最佳实践，使用 Lombok 简化代码
+  - 前端使用 TypeScript 严格模式，所有组件必须有类型定义
   - 医疗相关功能需要安全审查和测试覆盖
+  - API 接口必须有 Swagger/OpenAPI 文档
 
 # 每个工件的规则
 rules:
