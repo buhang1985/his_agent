@@ -32,6 +32,18 @@ docs/
 │   └── frontend/               # 前端测试报告
 │       └── unit-tests/         # 单元测试报告
 │
+├── database/                    # 数据库脚本
+│   ├── README.md               # 数据库脚本说明
+│   ├── ddl/                    # DDL 脚本 (数据定义)
+│   │   ├── 001-create-consultations.sql
+│   │   ├── 002-create-soap-notes.sql
+│   │   └── 003-create-diagnosis-suggestions.sql
+│   ├── dml/                    # DML 脚本 (数据操作)
+│   │   ├── 001-insert-sample-data.sql
+│   │   └── 002-insert-medical-terms.sql
+│   └── migrations/              # 迁移脚本 (Flyway)
+│       └── V1__initial_schema.sql
+│
 ├── architecture/                # 架构文档
 │   ├── system-architecture.md  # 系统架构
 │   ├── tech-stack.md           # 技术栈说明
@@ -136,6 +148,7 @@ npm run test:coverage
 | 用例文档 | 随功能版本更新 |
 | 测试报告 | 每次测试生成新报告 |
 | 架构文档 | 重大变更时更新 |
+| 数据库脚本 | 随 schema 变更更新 (Flyway 版本化) |
 
 ## 参考资料
 
