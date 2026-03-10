@@ -285,6 +285,24 @@ VITE_WS_URL=ws://localhost:8080/ws
 - **任务串行执行，上任务测试通过后才执行下一个**
 - 所有 PR 需要代码审查
 
+## Git 工作流
+
+本项目使用 Git Flow 分支模型：
+
+| 分支 | 说明 | 保护 |
+|------|------|------|
+| `main` | 生产分支，随时可部署 | ✅ 受保护 |
+| `develop` | 开发分支，集成功能 | ✅ 受保护 |
+| `feature/*` | 功能分支，开发新功能 | ❌ 不保护 |
+
+**开发流程**:
+1. 从 `develop` 创建 `feature/*` 分支
+2. 在功能分支上开发并提交
+3. 完成后创建 PR 合并到 `develop`
+4. `develop` 测试验证通过后，询问是否合并到 `main`
+
+详见：[Git 工作流规范](docs/manual/git-workflow.md)
+
 ## 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件
