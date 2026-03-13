@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# 获取变更文件
+CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+# 前端文件检查
+if echo "$CHANGED_FILES" | grep -q "^his_agent-frontend/"; then
+  echo "🔍 前端代码检查..."
+  cd his_agent-frontend
+  npx lint-staged
+  npm run typecheck
+fi
+
+# 后端文件检查
+if echo "$CHANGED_FILES" | grep -q "^his_agent-backend/"; then
+  echo "🔍 后端代码检查..."
+  cd his_agent-backend
+  mvn checkstyle:check -q
+  mvn compile -q
+fi
+
+# OpenSpec 规格检查
+if echo "$CHANGED_FILES" | grep -q "^openspec/"; then
+  echo "📋 OpenSpec 规格验证..."
+  openspec-cn validate
+fi

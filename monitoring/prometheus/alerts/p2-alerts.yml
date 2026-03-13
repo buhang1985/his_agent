@@ -1,0 +1,48 @@
+# P2 级告警规则（24 小时内响应）
+groups:
+  - name: his-agent-p2
+    interval: 5m
+    rules:
+      # CPU 使用率 > 50% 持续 30 分钟
+      - alert: LowCPUUsage
+        expr: avg(rate(process_cpu_seconds_total{job="his-agent"}[30m])) > 0.5
+        for: 30m
+        labels:
+          severity: p2
+          team: backend
+        annotations:
+          summary: "【P2】CPU 使用率持续增长"
+          description: "实例 {{ $labels.instance }} CPU 使用率持续增长超过 50%"
+      
+      # 磁盘使用率 > 80%
+      - alert: HighDiskUsage
+        expr: node_filesystem_avail_bytes / node_filesystem_size_bytes < 0.2
+        for: 30m
+        labels:
+          severity: p2
+          team: ops
+        annotations:
+          summary: "【P2】磁盘空间不足"
+          description: "实例 {{ $labels.instance }} 磁盘可用空间低于 20%"
+      
+      # JVM GC 频繁
+      - alert: FrequentGC
+        expr: rate(jvm_gc_pause_seconds_count{job="his-agent"}[5m]) > 10
+        for: 15m
+        labels:
+          severity: p2
+          team: backend
+        annotations:
+          summary: "【P2】JVM GC 过于频繁"
+          description: "实例 {{ $labels.instance }} GC 频率过高，每分钟 {{ $value | printf \"%.2f\" }} 次"
+      
+      # 慢查询增多
+      - alert: SlowQueryIncrease
+        expr: rate(hikaricp_connection_timeout_total{job="his-agent"}[10m]) > 1
+        for: 15m
+        labels:
+          severity: p2
+          team: backend
+        annotations:
+          summary: "【P2】数据库连接超时增多"
+          description: "实例 {{ $labels.instance }} 数据库连接超时增多"

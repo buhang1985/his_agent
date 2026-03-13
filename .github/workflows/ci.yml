@@ -1,0 +1,100 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ========== Stage 1: 代码质量 ==========
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 前端质量检查
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: his_agent-frontend/package-lock.json
+      
+      - name: Frontend Install
+        run: cd his_agent-frontend && npm ci
+      
+      - name: Frontend Lint
+        run: cd his_agent-frontend && npm run lint
+      
+      - name: Frontend Type Check
+        run: cd his_agent-frontend && npm run typecheck
+      
+      # 后端质量检查
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: his_agent-backend/pom.xml
+      
+      - name: Backend Checkstyle
+        run: cd his_agent-backend && mvn checkstyle:check -q
+      
+      # OpenSpec 规格验证
+      - name: Install OpenSpec CLI
+        run: pip install openspec-cn
+      
+      - name: OpenSpec Validate
+        run: openspec-cn validate
+
+  # ========== Stage 2: 测试 ==========
+  test:
+    needs: code-quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 前端测试
+      - name: Frontend Tests
+        run: |
+          cd his_agent-frontend
+          npm ci
+          npm run test:coverage
+      
+      - name: Upload Frontend Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./his_agent-frontend/coverage/coverage-final.json
+          flags: frontend
+      
+      # 后端测试
+      - name: Backend Tests
+        run: |
+          cd his_agent-backend
+          mvn test -Dspring.profiles.active=test
+      
+      - name: Upload Backend Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./his_agent-backend/target/site/jacoco/jacoco.xml
+          flags: backend
+
+  # ========== Stage 3: 构建 ==========
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Build Frontend
+        run: |
+          cd his_agent-frontend
+          npm ci
+          npm run build
+      
+      - name: Build Backend
+        run: |
+          cd his_agent-backend
+          mvn clean package -DskipTests

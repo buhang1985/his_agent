@@ -1,0 +1,70 @@
+# P0 级告警规则（立即响应）
+groups:
+  - name: his-agent-p0
+    interval: 30s
+    rules:
+      # CPU 使用率 > 90% 持续 5 分钟
+      - alert: HighCPUUsage
+        expr: avg(rate(process_cpu_seconds_total{job="his-agent"}[5m])) > 0.9
+        for: 5m
+        labels:
+          severity: p0
+          team: backend
+        annotations:
+          summary: "【P0】CPU 使用率过高"
+          description: "实例 {{ $labels.instance }} CPU 使用率超过 90%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 内存使用率 > 90% 持续 5 分钟
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{job="his-agent"} / jvm_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: p0
+          team: backend
+        annotations:
+          summary: "【P0】内存使用率过高"
+          description: "实例 {{ $labels.instance }} 内存使用率超过 90%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 接口错误率 > 10% 持续 2 分钟
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{job="his-agent",status=~"5.."}[2m])) / sum(rate(http_server_requests_seconds_count{job="his-agent"}[2m])) > 0.1
+        for: 2m
+        labels:
+          severity: p0
+          team: backend
+        annotations:
+          summary: "【P0】接口错误率过高"
+          description: "实例 {{ $labels.instance }} 接口错误率超过 10%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 数据库连接池耗尽
+      - alert: DatabaseConnectionPoolExhausted
+        expr: hikaricp_connections_active{job="his-agent"} / hikaricp_connections_max{job="his-agent"} > 0.95
+        for: 2m
+        labels:
+          severity: p0
+          team: backend
+        annotations:
+          summary: "【P0】数据库连接池耗尽"
+          description: "实例 {{ $labels.instance }} 数据库连接池使用率超过 95%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 服务不可用
+      - alert: ServiceDown
+        expr: up{job="his-agent"} == 0
+        for: 1m
+        labels:
+          severity: p0
+          team: backend
+        annotations:
+          summary: "【P0】HIS Agent 服务不可用"
+          description: "实例 {{ $labels.instance }} 服务已宕机"
+      
+      # 熔断器打开
+      - alert: CircuitBreakerOpen
+        expr: resilience4j_circuitbreaker_state{job="his-agent",state="OPEN"} == 1
+        for: 1m
+        labels:
+          severity: p0
+          team: backend
+        annotations:
+          summary: "【P0】熔断器打开"
+          description: "服务 {{ $labels.name }} 熔断器已打开，请求被拒绝"

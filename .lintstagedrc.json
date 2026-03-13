@@ -1,0 +1,12 @@
+{
+  "his_agent-frontend/**/*.{vue,ts,tsx}": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "his_agent-backend/**/*.java": [
+    "mvn spotless:apply -q"
+  ],
+  "openspec/**/*.md": [
+    "openspec-cn validate"
+  ]
+}

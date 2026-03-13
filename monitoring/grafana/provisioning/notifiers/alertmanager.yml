@@ -1,0 +1,13 @@
+# Grafana 告警通知渠道配置
+# 位置：monitoring/grafana/provisioning/notifiers/alertmanager.yml
+
+apiVersion: 1
+
+notifiers:
+  - name: AlertManager
+    type: alertmanager
+    uid: alertmanager
+    is_default: true
+    settings:
+      url: http://localhost:9093
+      timeout: 30

@@ -1,0 +1,59 @@
+# P1 级告警规则（30 分钟内响应）
+groups:
+  - name: his-agent-p1
+    interval: 1m
+    rules:
+      # CPU 使用率 > 70% 持续 10 分钟
+      - alert: MediumCPUUsage
+        expr: avg(rate(process_cpu_seconds_total{job="his-agent"}[10m])) > 0.7
+        for: 10m
+        labels:
+          severity: p1
+          team: backend
+        annotations:
+          summary: "【P1】CPU 使用率偏高"
+          description: "实例 {{ $labels.instance }} CPU 使用率超过 70%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 内存使用率 > 80% 持续 10 分钟
+      - alert: MediumMemoryUsage
+        expr: jvm_memory_used_bytes{job="his-agent"} / jvm_memory_max_bytes > 0.8
+        for: 10m
+        labels:
+          severity: p1
+          team: backend
+        annotations:
+          summary: "【P1】内存使用率偏高"
+          description: "实例 {{ $labels.instance }} 内存使用率超过 80%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 接口响应时间 P99 > 5 秒
+      - alert: HighP99Latency
+        expr: histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{job="his-agent"}[5m])) by (le)) > 5
+        for: 5m
+        labels:
+          severity: p1
+          team: backend
+        annotations:
+          summary: "【P1】P99 响应时间过长"
+          description: "实例 {{ $labels.instance }} P99 响应时间超过 5 秒，当前值 {{ $value | printf \"%.2f\" }}s"
+      
+      # 缓存命中率 < 50%
+      - alert: LowCacheHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.5
+        for: 10m
+        labels:
+          severity: p1
+          team: backend
+        annotations:
+          summary: "【P1】缓存命中率过低"
+          description: "Redis 缓存命中率低于 50%，当前值 {{ $value | printf \"%.2f\" }}"
+      
+      # 线程池使用率 > 80%
+      - alert: HighThreadPoolUsage
+        expr: jvm_threads_live_threads{job="his-agent"} / jvm_threads_daemon_threads > 0.8
+        for: 10m
+        labels:
+          severity: p1
+          team: backend
+        annotations:
+          summary: "【P1】线程池使用率偏高"
+          description: "实例 {{ $labels.instance }} 线程池使用率超过 80%"
