@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HisAdapterFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.his.adapter</a> &gt; <span class="el_source">HisAdapterFactory.java</span></div><h1>HisAdapterFactory.java</h1><pre class="source lang-java linenums">package com.hisagent.his.adapter;
+
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * HIS 适配器工厂
+ * 管理所有 HIS 适配器实例，提供适配器查找和注册功能
+ */
+@Component
+public class HisAdapterFactory {
+
+<span class="fc" id="L16">    private final ConcurrentHashMap&lt;String, HisAdapter&gt; adapters = new ConcurrentHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L18">    public HisAdapterFactory(List&lt;HisAdapter&gt; adapterList) {</span>
+        // 注册所有适配器
+<span class="fc bfc" id="L20" title="All 2 branches covered.">        for (HisAdapter adapter : adapterList) {</span>
+<span class="fc" id="L21">            registerAdapter(adapter);</span>
+        }
+<span class="fc" id="L23">    }</span>
+
+    /**
+     * 注册适配器
+     */
+    public void registerAdapter(HisAdapter adapter) {
+<span class="fc" id="L29">        adapters.put(adapter.getName().toLowerCase(), adapter);</span>
+<span class="fc" id="L30">        System.out.println(&quot;Registered HIS adapter: &quot; + adapter.getName());</span>
+<span class="fc" id="L31">    }</span>
+
+    /**
+     * 根据厂商名称获取适配器
+     */
+    public HisAdapter getAdapter(String hisVendor) {
+        // 先精确匹配
+<span class="nc" id="L38">        HisAdapter adapter = adapters.get(hisVendor.toLowerCase());</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (adapter != null) {</span>
+<span class="nc" id="L40">            return adapter;</span>
+        }
+
+        // 再尝试 supports 匹配
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        for (HisAdapter a : adapters.values()) {</span>
+<span class="nc bnc" id="L45" title="All 2 branches missed.">            if (a.supports(hisVendor)) {</span>
+<span class="nc" id="L46">                return a;</span>
+            }
+        }
+
+<span class="nc" id="L50">        throw new IllegalArgumentException(&quot;No HIS adapter found for vendor: &quot; + hisVendor);</span>
+    }
+
+    /**
+     * 获取所有适配器
+     */
+    public List&lt;HisAdapter&gt; getAllAdapters() {
+<span class="nc" id="L57">        return new ArrayList&lt;&gt;(adapters.values());</span>
+    }
+
+    /**
+     * 测试所有适配器连接
+     */
+    public List&lt;String&gt; testAllConnections() {
+<span class="nc" id="L64">        List&lt;String&gt; results = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        for (HisAdapter adapter : adapters.values()) {</span>
+<span class="nc" id="L66">            boolean connected = adapter.testConnection();</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            results.add(adapter.getName() + &quot;: &quot; + (connected ? &quot;Connected&quot; : &quot;Failed&quot;));</span>
+        }
+<span class="nc" id="L69">        return results;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

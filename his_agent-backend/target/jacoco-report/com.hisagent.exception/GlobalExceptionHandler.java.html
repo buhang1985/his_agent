@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.hisagent.exception;
+
+import com.hisagent.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.stream.Collectors;
+
+/**
+ * 全局异常处理器
+ */
+<span class="fc" id="L19">@Slf4j</span>
+@RestControllerAdvice
+<span class="fc" id="L21">public class GlobalExceptionHandler {</span>
+
+    /**
+     * 处理参数验证异常
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse&lt;Void&gt; handleValidationException(MethodArgumentNotValidException e) {
+<span class="nc" id="L29">        String errors = e.getBindingResult().getFieldErrors().stream()</span>
+<span class="nc" id="L30">            .map(FieldError::getDefaultMessage)</span>
+<span class="nc" id="L31">            .collect(Collectors.joining(&quot;, &quot;));</span>
+        
+<span class="nc" id="L33">        log.warn(&quot;Validation error: {}&quot;, errors);</span>
+<span class="nc" id="L34">        return ApiResponse.error(400, &quot;参数验证失败：&quot; + errors, getTraceId());</span>
+    }
+
+    /**
+     * 处理绑定异常
+     */
+    @ExceptionHandler(BindException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse&lt;Void&gt; handleBindException(BindException e) {
+<span class="nc" id="L43">        String errors = e.getBindingResult().getFieldErrors().stream()</span>
+<span class="nc" id="L44">            .map(FieldError::getDefaultMessage)</span>
+<span class="nc" id="L45">            .collect(Collectors.joining(&quot;, &quot;));</span>
+        
+<span class="nc" id="L47">        log.warn(&quot;Bind error: {}&quot;, errors);</span>
+<span class="nc" id="L48">        return ApiResponse.error(400, &quot;参数绑定失败：&quot; + errors, getTraceId());</span>
+    }
+
+    /**
+     * 处理业务异常
+     */
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse&lt;Void&gt; handleBusinessException(BusinessException e) {
+<span class="nc" id="L57">        log.warn(&quot;Business error: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L58">        return ApiResponse.error(e.getErrorCode().getCode(), e.getMessage(), getTraceId());</span>
+    }
+
+    /**
+     * 处理非法参数异常
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse&lt;Void&gt; handleIllegalArgumentException(IllegalArgumentException e) {
+<span class="nc" id="L67">        log.warn(&quot;Illegal argument: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L68">        return ApiResponse.error(400, &quot;非法参数：&quot; + e.getMessage(), getTraceId());</span>
+    }
+
+    /**
+     * 处理未授权异常
+     */
+    @ExceptionHandler(SecurityException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse&lt;Void&gt; handleSecurityException(SecurityException e) {
+<span class="nc" id="L77">        log.warn(&quot;Security error: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L78">        return ApiResponse.error(401, &quot;未授权：&quot; + e.getMessage(), getTraceId());</span>
+    }
+
+    /**
+     * 处理其他异常
+     */
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiResponse&lt;Void&gt; handleException(Exception e) {
+<span class="nc" id="L87">        log.error(&quot;Unexpected error&quot;, e);</span>
+<span class="nc" id="L88">        return ApiResponse.error(500, &quot;服务器内部错误：&quot; + e.getMessage(), getTraceId());</span>
+    }
+
+    /**
+     * 获取当前请求的 TraceId
+     */
+    private String getTraceId() {
+<span class="nc" id="L95">        return MDC.get(&quot;traceId&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

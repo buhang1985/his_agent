@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtTokenProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.security</a> &gt; <span class="el_source">JwtTokenProvider.java</span></div><h1>JwtTokenProvider.java</h1><pre class="source lang-java linenums">package com.hisagent.security;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+import javax.crypto.SecretKey;
+
+/**
+ * JWT Token 提供者
+ */
+<span class="fc" id="L21">@Slf4j</span>
+@Component
+<span class="fc" id="L23">public class JwtTokenProvider {</span>
+
+    @Value(&quot;${app.jwt.secret:YUzh@1985223HisAgentSecretKeyForJWTTokenGeneration2026}&quot;)
+    private String jwtSecret;
+
+    @Value(&quot;${app.jwt.expiration:86400000}&quot;)
+    private long jwtExpirationMs;
+
+    /**
+     * 从 token 中提取用户名
+     */
+    public String getUsernameFromToken(String token) {
+<span class="nc" id="L35">        return extractClaim(token, Claims::getSubject);</span>
+    }
+
+    /**
+     * 从 token 中提取过期时间
+     */
+    public Date getExpirationDateFromToken(String token) {
+<span class="nc" id="L42">        return extractClaim(token, Claims::getExpiration);</span>
+    }
+
+    /**
+     * 提取指定 claim
+     */
+    public &lt;T&gt; T extractClaim(String token, Function&lt;Claims, T&gt; claimsResolver) {
+<span class="nc" id="L49">        final Claims claims = extractAllClaims(token);</span>
+<span class="nc" id="L50">        return claimsResolver.apply(claims);</span>
+    }
+
+    /**
+     * 生成 JWT token
+     */
+    public String generateToken(UserDetails userDetails) {
+<span class="nc" id="L57">        Map&lt;String, Object&gt; claims = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L58">        return createToken(claims, userDetails.getUsername());</span>
+    }
+
+    /**
+     * 创建 token
+     */
+    private String createToken(Map&lt;String, Object&gt; claims, String subject) {
+<span class="nc" id="L65">        return Jwts.builder()</span>
+<span class="nc" id="L66">            .claims(claims)</span>
+<span class="nc" id="L67">            .subject(subject)</span>
+<span class="nc" id="L68">            .issuedAt(new Date(System.currentTimeMillis()))</span>
+<span class="nc" id="L69">            .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))</span>
+<span class="nc" id="L70">            .signWith(getSigningKey())</span>
+<span class="nc" id="L71">            .compact();</span>
+    }
+
+    /**
+     * 验证 token 是否有效
+     */
+    public Boolean validateToken(String token, UserDetails userDetails) {
+<span class="nc" id="L78">        final String username = getUsernameFromToken(token);</span>
+<span class="nc bnc" id="L79" title="All 4 branches missed.">        return (username.equals(userDetails.getUsername()) &amp;&amp; !isTokenExpired(token));</span>
+    }
+
+    /**
+     * 检查 token 是否过期
+     */
+    private Boolean isTokenExpired(String token) {
+<span class="nc" id="L86">        final Date expiration = extractAllClaims(token).getExpiration();</span>
+<span class="nc" id="L87">        return expiration.before(new Date());</span>
+    }
+
+    /**
+     * 提取所有 claims
+     */
+    private Claims extractAllClaims(String token) {
+<span class="nc" id="L94">        return Jwts.parser()</span>
+<span class="nc" id="L95">            .verifyWith(getSigningKey())</span>
+<span class="nc" id="L96">            .build()</span>
+<span class="nc" id="L97">            .parseSignedClaims(token)</span>
+<span class="nc" id="L98">            .getPayload();</span>
+    }
+
+    /**
+     * 获取签名密钥
+     */
+    private SecretKey getSigningKey() {
+<span class="nc" id="L105">        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);</span>
+<span class="nc" id="L106">        return Keys.hmacShaKeyFor(keyBytes);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

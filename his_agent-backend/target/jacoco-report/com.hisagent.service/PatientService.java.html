@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PatientService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.service</a> &gt; <span class="el_source">PatientService.java</span></div><h1>PatientService.java</h1><pre class="source lang-java linenums">package com.hisagent.service;
+
+import com.hisagent.dto.PatientDTO;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 患者服务
+ */
+@Service
+<span class="fc" id="L14">public class PatientService {</span>
+
+    /**
+     * 获取所有患者（模拟数据）
+     */
+    public List&lt;PatientDTO&gt; getAllPatients() {
+<span class="nc" id="L20">        return getMockPatients();</span>
+    }
+
+    /**
+     * 根据 ID 获取患者
+     */
+    public PatientDTO getPatientById(String id) {
+<span class="nc" id="L27">        return getMockPatients().stream()</span>
+<span class="nc" id="L28">            .filter(p -&gt; p.getId().equals(id))</span>
+<span class="nc" id="L29">            .findFirst()</span>
+<span class="nc" id="L30">            .orElseThrow(() -&gt; new RuntimeException(&quot;Patient not found: &quot; + id));</span>
+    }
+
+    /**
+     * 模拟患者数据
+     */
+    private List&lt;PatientDTO&gt; getMockPatients() {
+<span class="nc" id="L37">        return Arrays.asList(</span>
+<span class="nc" id="L38">            PatientDTO.builder()</span>
+<span class="nc" id="L39">                .id(&quot;P001&quot;)</span>
+<span class="nc" id="L40">                .name(&quot;张三&quot;)</span>
+<span class="nc" id="L41">                .idCard(&quot;110101199001011234&quot;)</span>
+<span class="nc" id="L42">                .phone(&quot;138****5678&quot;)</span>
+<span class="nc" id="L43">                .gender(&quot;男&quot;)</span>
+<span class="nc" id="L44">                .age(34)</span>
+<span class="nc" id="L45">                .address(&quot;北京市朝阳区&quot;)</span>
+<span class="nc" id="L46">                .build(),</span>
+<span class="nc" id="L47">            PatientDTO.builder()</span>
+<span class="nc" id="L48">                .id(&quot;P002&quot;)</span>
+<span class="nc" id="L49">                .name(&quot;李四&quot;)</span>
+<span class="nc" id="L50">                .idCard(&quot;110101198502022345&quot;)</span>
+<span class="nc" id="L51">                .phone(&quot;139****9999&quot;)</span>
+<span class="nc" id="L52">                .gender(&quot;女&quot;)</span>
+<span class="nc" id="L53">                .age(39)</span>
+<span class="nc" id="L54">                .address(&quot;北京市海淀区&quot;)</span>
+<span class="nc" id="L55">                .build(),</span>
+<span class="nc" id="L56">            PatientDTO.builder()</span>
+<span class="nc" id="L57">                .id(&quot;P003&quot;)</span>
+<span class="nc" id="L58">                .name(&quot;王五&quot;)</span>
+<span class="nc" id="L59">                .idCard(&quot;110101199503033456&quot;)</span>
+<span class="nc" id="L60">                .phone(&quot;137****8888&quot;)</span>
+<span class="nc" id="L61">                .gender(&quot;男&quot;)</span>
+<span class="nc" id="L62">                .age(29)</span>
+<span class="nc" id="L63">                .address(&quot;北京市西城区&quot;)</span>
+<span class="nc" id="L64">                .build(),</span>
+<span class="nc" id="L65">            PatientDTO.builder()</span>
+<span class="nc" id="L66">                .id(&quot;P004&quot;)</span>
+<span class="nc" id="L67">                .name(&quot;赵六&quot;)</span>
+<span class="nc" id="L68">                .idCard(&quot;110101200004044567&quot;)</span>
+<span class="nc" id="L69">                .phone(&quot;136****7777&quot;)</span>
+<span class="nc" id="L70">                .gender(&quot;女&quot;)</span>
+<span class="nc" id="L71">                .age(24)</span>
+<span class="nc" id="L72">                .address(&quot;北京市东城区&quot;)</span>
+<span class="nc" id="L73">                .build(),</span>
+<span class="nc" id="L74">            PatientDTO.builder()</span>
+<span class="nc" id="L75">                .id(&quot;P005&quot;)</span>
+<span class="nc" id="L76">                .name(&quot;孙七&quot;)</span>
+<span class="nc" id="L77">                .idCard(&quot;110101198805055678&quot;)</span>
+<span class="nc" id="L78">                .phone(&quot;135****6666&quot;)</span>
+<span class="nc" id="L79">                .gender(&quot;男&quot;)</span>
+<span class="nc" id="L80">                .age(36)</span>
+<span class="nc" id="L81">                .address(&quot;北京市丰台区&quot;)</span>
+<span class="nc" id="L82">                .build()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

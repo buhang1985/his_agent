@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.hisagent.cache.CacheConfigTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 20.66 s -- in com.hisagent.cache.CacheConfigTest

@@ -125,23 +125,23 @@ function getErrorMessage(status: number): string {
 // 封装请求方法
 export const httpService = {
   get<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> {
-    return http.get<T>(url, config);
+    return http.get<ApiResponse<T>>(url, config);
   },
 
   post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> {
-    return http.post<T>(url, data, config);
+    return http.post<ApiResponse<T>>(url, data, config);
   },
 
   put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> {
-    return http.put<T>(url, data, config);
+    return http.put<ApiResponse<T>>(url, data, config);
   },
 
   delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> {
-    return http.delete<T>(url, config);
+    return http.delete<ApiResponse<T>>(url, config);
   },
 
   upload<T = any>(url: string, formData: FormData): Promise<AxiosResponse<ApiResponse<T>>> {
-    return http.post<T>(url, formData, {
+    return http.post<ApiResponse<T>>(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

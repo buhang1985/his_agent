@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DevPortalController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.controller</a> &gt; <span class="el_source">DevPortalController.java</span></div><h1>DevPortalController.java</h1><pre class="source lang-java linenums">package com.hisagent.controller;
+
+import lombok.Builder;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/dev&quot;)
+@RequiredArgsConstructor
+public class DevPortalController {
+    
+    @GetMapping(&quot;/server-status&quot;)
+    public ResponseEntity&lt;ServerStatus&gt; getServerStatus() {
+<span class="nc" id="L26">        OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();</span>
+<span class="nc" id="L27">        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();</span>
+        
+<span class="nc" id="L29">        return ResponseEntity.ok(ServerStatus.builder()</span>
+<span class="nc" id="L30">            .cpuLoad(osBean.getSystemLoadAverage())</span>
+<span class="nc" id="L31">            .memoryUsed(memoryBean.getHeapMemoryUsage().getUsed())</span>
+<span class="nc" id="L32">            .memoryMax(memoryBean.getHeapMemoryUsage().getMax())</span>
+<span class="nc" id="L33">            .build());</span>
+    }
+    
+    @GetMapping(&quot;/health&quot;)
+    public ResponseEntity&lt;Map&lt;String, HealthStatus&gt;&gt; getHealthStatus() {
+<span class="nc" id="L38">        Map&lt;String, HealthStatus&gt; status = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L39">        status.put(&quot;backend&quot;, checkBackend());</span>
+<span class="nc" id="L40">        status.put(&quot;database&quot;, checkDatabase());</span>
+<span class="nc" id="L41">        status.put(&quot;redis&quot;, checkRedis());</span>
+        
+<span class="nc" id="L43">        boolean allHealthy = status.values().stream()</span>
+<span class="nc" id="L44">            .allMatch(HealthStatus::isHealthy);</span>
+        
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        return ResponseEntity.status(allHealthy ? 200 : 503).body(status);</span>
+    }
+    
+    private HealthStatus checkBackend() {
+<span class="nc" id="L50">        return HealthStatus.builder()</span>
+<span class="nc" id="L51">            .healthy(true)</span>
+<span class="nc" id="L52">            .message(&quot;Backend is running&quot;)</span>
+<span class="nc" id="L53">            .build();</span>
+    }
+    
+    private HealthStatus checkDatabase() {
+<span class="nc" id="L57">        return HealthStatus.builder()</span>
+<span class="nc" id="L58">            .healthy(true)</span>
+<span class="nc" id="L59">            .message(&quot;Database connection OK&quot;)</span>
+<span class="nc" id="L60">            .build();</span>
+    }
+    
+    private HealthStatus checkRedis() {
+<span class="nc" id="L64">        return HealthStatus.builder()</span>
+<span class="nc" id="L65">            .healthy(true)</span>
+<span class="nc" id="L66">            .message(&quot;Redis connection OK&quot;)</span>
+<span class="nc" id="L67">            .build();</span>
+    }
+    
+    @Builder
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ServerStatus {
+        private Double cpuLoad;
+        private Long memoryUsed;
+        private Long memoryMax;
+    }
+    
+    @Builder
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HealthStatus {
+        private boolean healthy;
+        private String message;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

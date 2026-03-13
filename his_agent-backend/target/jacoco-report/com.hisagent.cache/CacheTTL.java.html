@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CacheTTL.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.cache</a> &gt; <span class="el_source">CacheTTL.java</span></div><h1>CacheTTL.java</h1><pre class="source lang-java linenums">package com.hisagent.cache;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 缓存过期时间常量
+ * 所有缓存必须设置明确的过期时间，禁止永久缓存
+ */
+public final class CacheTTL {
+    
+    private CacheTTL() {
+        // 工具类，禁止实例化
+    }
+    
+    /**
+     * 患者数据缓存时间：30 分钟
+     * 频繁访问，隐私敏感
+     */
+    public static final long PATIENT_DATA = 30;
+<span class="fc" id="L20">    public static final TimeUnit PATIENT_DATA_UNIT = TimeUnit.MINUTES;</span>
+    
+    /**
+     * 用户会话缓存时间：2 小时
+     * 与 Token 有效期一致
+     */
+    public static final long USER_SESSION = 2;
+<span class="fc" id="L27">    public static final TimeUnit USER_SESSION_UNIT = TimeUnit.HOURS;</span>
+    
+    /**
+     * 医学词库缓存时间：24 小时
+     * 极少变化，访问频繁
+     */
+    public static final long MEDICAL_TERM = 24;
+<span class="fc" id="L34">    public static final TimeUnit MEDICAL_TERM_UNIT = TimeUnit.HOURS;</span>
+    
+    /**
+     * 配置数据缓存时间：1 小时
+     * 可能动态调整
+     */
+    public static final long CONFIG_DATA = 1;
+<span class="fc" id="L41">    public static final TimeUnit CONFIG_DATA_UNIT = TimeUnit.HOURS;</span>
+    
+    /**
+     * API 响应缓存时间：10 分钟
+     * 短期缓存
+     */
+    public static final long API_RESPONSE = 10;
+<span class="fc" id="L48">    public static final TimeUnit API_RESPONSE_UNIT = TimeUnit.MINUTES;</span>
+    
+    /**
+     * 空值缓存时间：5 分钟
+     * 穿透防护
+     */
+    public static final long NULL_VALUE = 5;
+<span class="fc" id="L55">    public static final TimeUnit NULL_VALUE_UNIT = TimeUnit.MINUTES;</span>
+    
+    /**
+     * 录音数据缓存时间：1 小时
+     * 病历生成后自动删除
+     */
+    public static final long RECORDING = 1;
+<span class="fc" id="L62">    public static final TimeUnit RECORDING_UNIT = TimeUnit.HOURS;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

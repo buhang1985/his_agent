@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SensitiveDataFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.filter</a> &gt; <span class="el_source">SensitiveDataFilter.java</span></div><h1>SensitiveDataFilter.java</h1><pre class="source lang-java linenums">package com.hisagent.filter;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.filter.Filter;
+import ch.qos.logback.core.spi.FilterReply;
+
+import java.util.regex.Pattern;
+
+/**
+ * 敏感数据日志过滤器
+ * 自动过滤日志中的敏感信息（手机号、身份证、邮箱等）
+ */
+<span class="nc" id="L13">public class SensitiveDataFilter extends Filter&lt;ILoggingEvent&gt; {</span>
+
+<span class="nc" id="L15">    private static final Pattern PHONE_PATTERN = Pattern.compile(&quot;(1[3-9]\\d{9})&quot;);</span>
+<span class="nc" id="L16">    private static final Pattern ID_CARD_PATTERN = Pattern.compile(&quot;(\\d{17}[\\dXx]|\\d{15})&quot;);</span>
+<span class="nc" id="L17">    private static final Pattern EMAIL_PATTERN = Pattern.compile(&quot;([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})&quot;);</span>
+
+    @Override
+    public FilterReply decide(ILoggingEvent event) {
+<span class="nc" id="L21">        String message = event.getFormattedMessage();</span>
+        
+<span class="nc bnc" id="L23" title="All 2 branches missed.">        if (message == null) {</span>
+<span class="nc" id="L24">            return FilterReply.NEUTRAL;</span>
+        }
+
+        // 脱敏手机号
+<span class="nc" id="L28">        message = PHONE_PATTERN.matcher(message).replaceAll(&quot;$1&quot;.substring(0, 3) + &quot;****$1&quot;.substring(7));</span>
+        
+        // 脱敏身份证号
+<span class="nc" id="L31">        message = ID_CARD_PATTERN.matcher(message).replaceAll(&quot;$1&quot;.substring(0, 6) + &quot;********$1&quot;.substring(14));</span>
+        
+        // 脱敏邮箱
+<span class="nc" id="L34">        message = EMAIL_PATTERN.matcher(message).replaceAll(&quot;$1&quot;.substring(0, 1) + &quot;***@$1&quot;.substring(1));</span>
+
+        // 如果消息被修改，记录脱敏后的日志
+<span class="nc" id="L37">        if (!message.equals(event.getFormattedMessage())) {</span>
+            // 这里可以添加逻辑来替换日志消息
+            // 由于 Logback 限制，实际脱敏需要在日志输出层面处理
+        }
+
+<span class="nc" id="L42">        return FilterReply.NEUTRAL;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

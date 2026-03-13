@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CacheServiceExample.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.service</a> &gt; <span class="el_source">CacheServiceExample.java</span></div><h1>CacheServiceExample.java</h1><pre class="source lang-java linenums">package com.hisagent.service;
+
+import com.hisagent.cache.CacheKeyBuilder;
+import com.hisagent.cache.CacheTTL;
+import com.hisagent.cache.CacheUtils;
+import com.hisagent.model.Patient;
+import com.hisagent.repository.PatientRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Service;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 缓存服务示例
+ * 演示缓存穿透防护、雪崩防护和缓存更新策略
+ */
+<span class="fc" id="L25">@Slf4j</span>
+@Service
+@RequiredArgsConstructor
+public class CacheServiceExample {
+
+    private final PatientRepository patientRepository;
+    private final RedisTemplate&lt;String, Object&gt; redisTemplate;
+
+    /**
+     * 查询患者信息 - 使用@Cacheable 缓存
+     * 缓存穿透防护：空值也会被缓存
+     * 缓存雪崩防护：使用随机过期时间
+     */
+    @Cacheable(
+        value = &quot;patients&quot;,
+        key = &quot;#patientId&quot;,
+        unless = &quot;#result == null&quot;
+    )
+    public Patient getPatientWithCache(String patientId) {
+<span class="nc" id="L44">        log.debug(&quot;Querying patient from database: {}&quot;, patientId);</span>
+        
+<span class="nc" id="L46">        return patientRepository.findById(patientId)</span>
+<span class="nc" id="L47">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Patient not found: &quot; + patientId));</span>
+    }
+
+    /**
+     * 查询患者信息 - 手动缓存管理（演示空值缓存）
+     * 缓存穿透防护：查询为空时缓存空值标记
+     */
+    public Optional&lt;Patient&gt; getPatientWithNullCache(String patientId) {
+<span class="nc" id="L55">        String cacheKey = CacheKeyBuilder.patientInfo(patientId);</span>
+        
+        // 尝试从缓存获取
+<span class="nc" id="L58">        Object cached = redisTemplate.opsForValue().get(cacheKey);</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">        if (cached != null) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">            if (CacheUtils.isNullValue(cached)) {</span>
+<span class="nc" id="L61">                log.debug(&quot;Cache hit (null value): {}&quot;, patientId);</span>
+<span class="nc" id="L62">                return Optional.empty();</span>
+            }
+<span class="nc" id="L64">            log.debug(&quot;Cache hit: {}&quot;, patientId);</span>
+<span class="nc" id="L65">            return Optional.of((Patient) cached);</span>
+        }
+        
+        // 查询数据库
+<span class="nc" id="L69">        Optional&lt;Patient&gt; patient = patientRepository.findById(patientId);</span>
+        
+        // 写入缓存（包括空值）
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (patient.isPresent()) {</span>
+<span class="nc" id="L73">            long ttl = CacheUtils.calculateTTLWithJitter(</span>
+<span class="nc" id="L74">                CacheTTL.PATIENT_DATA, </span>
+<span class="nc" id="L75">                CacheTTL.PATIENT_DATA_UNIT</span>
+            );
+<span class="nc" id="L77">            redisTemplate.opsForValue().set(cacheKey, patient.get(), ttl, TimeUnit.MILLISECONDS);</span>
+<span class="nc" id="L78">            log.debug(&quot;Cache set (with jitter TTL {}ms): {}&quot;, ttl, patientId);</span>
+<span class="nc" id="L79">        } else {</span>
+            // 缓存空值，防止缓存穿透
+<span class="nc" id="L81">            long ttl = CacheTTL.NULL_VALUE_UNIT.toMillis(CacheTTL.NULL_VALUE);</span>
+<span class="nc" id="L82">            redisTemplate.opsForValue().set(cacheKey, CacheUtils.getNullValueMarker(), ttl, TimeUnit.MILLISECONDS);</span>
+<span class="nc" id="L83">            log.debug(&quot;Cache set (null marker, {}ms): {}&quot;, ttl, patientId);</span>
+        }
+        
+<span class="nc" id="L86">        return patient;</span>
+    }
+
+    /**
+     * 更新患者信息 - 先更新 DB，再删除缓存
+     * Cache-Aside 模式：更新时删除缓存，而不是更新缓存
+     */
+    @Caching(evict = {
+        @CacheEvict(value = &quot;patients&quot;, key = &quot;#patient.id&quot;),
+        @CacheEvict(value = &quot;patientInfo&quot;, key = &quot;#patient.id&quot;)
+    })
+    public Patient updatePatient(Patient patient) {
+<span class="nc" id="L98">        log.info(&quot;Updating patient: {}&quot;, patient.getId());</span>
+        
+        // 先更新数据库
+<span class="nc" id="L101">        Patient updated = patientRepository.save(patient);</span>
+        
+        // @CacheEvict 会自动删除缓存
+        // 如果删除失败，重试机制会在切面中处理
+<span class="nc" id="L105">        log.info(&quot;Patient updated and cache invalidated: {}&quot;, patient.getId());</span>
+        
+<span class="nc" id="L107">        return updated;</span>
+    }
+
+    /**
+     * 删除患者信息 - 带重试机制
+     * 缓存删除失败时自动重试
+     */
+    @CacheEvict(value = &quot;patients&quot;, key = &quot;#patientId&quot;)
+    @Retryable(
+        retryFor = Exception.class,
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 1000)
+    )
+    public void deletePatientWithRetry(String patientId) {
+<span class="nc" id="L121">        log.info(&quot;Deleting patient: {}&quot;, patientId);</span>
+        
+        // 手动删除缓存（演示重试）
+<span class="nc" id="L124">        String cacheKey = CacheKeyBuilder.patientInfo(patientId);</span>
+<span class="nc" id="L125">        Boolean deleted = redisTemplate.delete(cacheKey);</span>
+        
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        if (Boolean.FALSE.equals(deleted)) {</span>
+<span class="nc" id="L128">            throw new RuntimeException(&quot;Failed to delete cache for patient: &quot; + patientId);</span>
+        }
+        
+<span class="nc" id="L131">        patientRepository.deleteById(patientId);</span>
+<span class="nc" id="L132">        log.info(&quot;Patient deleted: {}&quot;, patientId);</span>
+<span class="nc" id="L133">    }</span>
+
+    /**
+     * 批量查询患者 - 演示缓存雪崩防护
+     * 为不同的患者 ID 设置不同的过期时间偏移
+     */
+    public Optional&lt;Patient&gt; getPatientWithAntiAvalanche(String patientId) {
+<span class="nc" id="L140">        String cacheKey = CacheKeyBuilder.patientInfo(patientId);</span>
+        
+<span class="nc" id="L142">        Object cached = redisTemplate.opsForValue().get(cacheKey);</span>
+<span class="nc bnc" id="L143" title="All 4 branches missed.">        if (cached != null &amp;&amp; !CacheUtils.isNullValue(cached)) {</span>
+<span class="nc" id="L144">            return Optional.of((Patient) cached);</span>
+        }
+        
+<span class="nc" id="L147">        Optional&lt;Patient&gt; patient = patientRepository.findById(patientId);</span>
+        
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        if (patient.isPresent()) {</span>
+            // 使用患者 ID 哈希作为随机种子，确保相同 ID 总是获得相同的 TTL
+<span class="nc" id="L151">            int seed = patientId.hashCode();</span>
+<span class="nc" id="L152">            long baseTTL = CacheTTL.PATIENT_DATA_UNIT.toMillis(CacheTTL.PATIENT_DATA);</span>
+<span class="nc" id="L153">            long jitter = (seed % 20 - 10) * baseTTL / 100; // ±10% 偏移</span>
+<span class="nc" id="L154">            long actualTTL = baseTTL + jitter;</span>
+            
+<span class="nc" id="L156">            redisTemplate.opsForValue().set(</span>
+<span class="nc" id="L157">                cacheKey, </span>
+<span class="nc" id="L158">                patient.get(), </span>
+<span class="nc" id="L159">                actualTTL, </span>
+<span class="nc" id="L160">                TimeUnit.MILLISECONDS</span>
+            );
+<span class="nc" id="L162">            log.debug(&quot;Cache set with anti-avalanche TTL {}ms: {}&quot;, actualTTL, patientId);</span>
+        }
+        
+<span class="nc" id="L165">        return patient;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

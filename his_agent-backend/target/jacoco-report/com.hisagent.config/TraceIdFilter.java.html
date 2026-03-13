@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TraceIdFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.config</a> &gt; <span class="el_source">TraceIdFilter.java</span></div><h1>TraceIdFilter.java</h1><pre class="source lang-java linenums">package com.hisagent.config;
+
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.util.UUID;
+
+/**
+ * TraceId 过滤器
+ * 为每个请求生成唯一的追踪 ID，用于日志链路追踪
+ */
+<span class="fc" id="L17">@Slf4j</span>
+@Component
+@Order(1)
+<span class="fc" id="L20">public class TraceIdFilter implements Filter {</span>
+
+    private static final String TRACE_ID_HEADER = &quot;X-Trace-Id&quot;;
+<span class="fc" id="L23">    private static final String TRACE_ID_KEY = &quot;traceId&quot;;</span>
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        
+<span class="nc" id="L29">        HttpServletRequest httpRequest = (HttpServletRequest) request;</span>
+        
+        // 获取或生成 TraceId
+<span class="nc" id="L32">        String traceId = httpRequest.getHeader(TRACE_ID_HEADER);</span>
+<span class="nc bnc" id="L33" title="All 4 branches missed.">        if (traceId == null || traceId.isEmpty()) {</span>
+<span class="nc" id="L34">            traceId = generateTraceId();</span>
+        }
+        
+        // 设置到 MDC 上下文
+<span class="nc" id="L38">        MDC.put(TRACE_ID_KEY, traceId);</span>
+        
+        try {
+            // 将 TraceId 添加到响应头
+<span class="nc bnc" id="L42" title="All 2 branches missed.">            if (response instanceof jakarta.servlet.http.HttpServletResponse) {</span>
+<span class="nc" id="L43">                ((jakarta.servlet.http.HttpServletResponse) response)</span>
+<span class="nc" id="L44">                    .setHeader(TRACE_ID_HEADER, traceId);</span>
+            }
+            
+            // 继续处理请求
+<span class="nc" id="L48">            chain.doFilter(request, response);</span>
+<span class="nc" id="L49">        } finally {</span>
+            // 清理 MDC
+<span class="nc" id="L51">            MDC.remove(TRACE_ID_KEY);</span>
+        }
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * 生成 TraceId
+     * 格式：时间戳 -UUID 片段
+     */
+    private String generateTraceId() {
+<span class="nc" id="L60">        long timestamp = System.currentTimeMillis();</span>
+<span class="nc" id="L61">        String uuid = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;).substring(0, 8);</span>
+<span class="nc" id="L62">        return String.format(&quot;t%d-%s&quot;, timestamp, uuid);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

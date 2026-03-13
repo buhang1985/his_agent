@@ -533,6 +533,4 @@
 <error line="4" column="14" severity="warning" message="Using the &apos;.*&apos; form of import should be avoided - lombok.*." source="com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck"/>
 <error line="10" severity="warning" message="First sentence of Javadoc is missing an ending period." source="com.puppycrawl.tools.checkstyle.checks.javadoc.SummaryJavadocCheck"/>
 </file>
-<file name="/home/yuzihao/workspace/his_agent/his_agent-backend/src/main/resources/application.properties">
-</file>
 </checkstyle>

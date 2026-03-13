@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MockHisAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.his.mock</a> &gt; <span class="el_source">MockHisAdapter.java</span></div><h1>MockHisAdapter.java</h1><pre class="source lang-java linenums">package com.hisagent.his.mock;
+
+import com.hisagent.dto.his.HisPatientDTO;
+import com.hisagent.dto.his.HisConsultationDTO;
+import com.hisagent.his.adapter.BaseHisAdapter;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Mock HIS 测试服务
+ * 用于开发和测试环境，模拟 HIS 接口响应
+ */
+@Profile({&quot;dev&quot;, &quot;test&quot;})
+@Component
+public class MockHisAdapter extends BaseHisAdapter {
+
+<span class="fc" id="L21">    private final ConcurrentHashMap&lt;String, HisPatientDTO&gt; patientStore = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L22">    private final ConcurrentHashMap&lt;String, HisConsultationDTO&gt; consultationStore = new ConcurrentHashMap&lt;&gt;();</span>
+
+    public MockHisAdapter() {
+<span class="fc" id="L25">        super(&quot;MOCK&quot;, &quot;mock://localhost&quot;, 5000);</span>
+
+        // 初始化一些测试数据
+<span class="fc" id="L28">        initTestData();</span>
+<span class="fc" id="L29">    }</span>
+
+    private void initTestData() {
+        // 测试患者
+<span class="fc" id="L33">        patientStore.put(&quot;MOCK_001&quot;, HisPatientDTO.builder()</span>
+<span class="fc" id="L34">            .id(&quot;MOCK_001&quot;)</span>
+<span class="fc" id="L35">            .name(&quot;张三&quot;)</span>
+<span class="fc" id="L36">            .idCard(&quot;110101199001011234&quot;)</span>
+<span class="fc" id="L37">            .phone(&quot;13800138000&quot;)</span>
+<span class="fc" id="L38">            .gender(&quot;男&quot;)</span>
+<span class="fc" id="L39">            .age(30)</span>
+<span class="fc" id="L40">            .address(&quot;北京市朝阳区&quot;)</span>
+<span class="fc" id="L41">            .synced(true)</span>
+<span class="fc" id="L42">            .build());</span>
+
+<span class="fc" id="L44">        patientStore.put(&quot;MOCK_002&quot;, HisPatientDTO.builder()</span>
+<span class="fc" id="L45">            .id(&quot;MOCK_002&quot;)</span>
+<span class="fc" id="L46">            .name(&quot;李四&quot;)</span>
+<span class="fc" id="L47">            .idCard(&quot;110101199002022345&quot;)</span>
+<span class="fc" id="L48">            .phone(&quot;13900139000&quot;)</span>
+<span class="fc" id="L49">            .gender(&quot;女&quot;)</span>
+<span class="fc" id="L50">            .age(25)</span>
+<span class="fc" id="L51">            .address(&quot;北京市海淀区&quot;)</span>
+<span class="fc" id="L52">            .synced(true)</span>
+<span class="fc" id="L53">            .build());</span>
+
+        // 测试问诊记录
+<span class="fc" id="L56">        consultationStore.put(&quot;MOCK_C001&quot;, HisConsultationDTO.builder()</span>
+<span class="fc" id="L57">            .id(&quot;MOCK_C001&quot;)</span>
+<span class="fc" id="L58">            .patientId(&quot;MOCK_001&quot;)</span>
+<span class="fc" id="L59">            .doctorId(&quot;DOCTOR_001&quot;)</span>
+<span class="fc" id="L60">            .status(&quot;completed&quot;)</span>
+<span class="fc" id="L61">            .chiefComplaint(&quot;头痛&quot;)</span>
+<span class="fc" id="L62">            .diagnosis(&quot;感冒&quot;)</span>
+<span class="fc" id="L63">            .synced(true)</span>
+<span class="fc" id="L64">            .build());</span>
+<span class="fc" id="L65">    }</span>
+
+    @Override
+    protected HisPatientDTO doGetPatient(String patientId) {
+<span class="nc" id="L69">        simulateDelay(100);</span>
+<span class="nc" id="L70">        HisPatientDTO patient = patientStore.get(patientId);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (patient == null) {</span>
+<span class="nc" id="L72">            throw new RuntimeException(&quot;Patient not found: &quot; + patientId);</span>
+        }
+<span class="nc" id="L74">        return patient;</span>
+    }
+
+    @Override
+    protected HisPatientDTO doGetPatientByIdCard(String idCard) {
+<span class="nc" id="L79">        simulateDelay(100);</span>
+<span class="nc" id="L80">        return patientStore.values().stream()</span>
+<span class="nc" id="L81">            .filter(p -&gt; idCard.equals(p.getIdCard()))</span>
+<span class="nc" id="L82">            .findFirst()</span>
+<span class="nc" id="L83">            .orElse(null);</span>
+    }
+
+    @Override
+    protected List&lt;HisPatientDTO&gt; doSearchPatients(String keyword) {
+<span class="nc" id="L88">        simulateDelay(200);</span>
+<span class="nc" id="L89">        return patientStore.values().stream()</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">            .filter(p -&gt; p.getName().contains(keyword) ||</span>
+<span class="nc bnc" id="L91" title="All 4 branches missed.">                        (p.getIdCard() != null &amp;&amp; p.getIdCard().contains(keyword)))</span>
+<span class="nc" id="L92">            .limit(10)</span>
+<span class="nc" id="L93">            .toList();</span>
+    }
+
+    @Override
+    protected HisConsultationDTO doCreateConsultation(HisConsultationDTO consultation) {
+<span class="nc" id="L98">        simulateDelay(150);</span>
+<span class="nc" id="L99">        consultation.setId(&quot;MOCK_C&quot; + System.currentTimeMillis());</span>
+<span class="nc" id="L100">        consultation.setSynced(true);</span>
+<span class="nc" id="L101">        consultationStore.put(consultation.getId(), consultation);</span>
+<span class="nc" id="L102">        return consultation;</span>
+    }
+
+    @Override
+    protected HisConsultationDTO doUpdateConsultation(HisConsultationDTO consultation) {
+<span class="nc" id="L107">        simulateDelay(150);</span>
+<span class="nc" id="L108">        consultation.setSynced(true);</span>
+<span class="nc" id="L109">        consultationStore.put(consultation.getId(), consultation);</span>
+<span class="nc" id="L110">        return consultation;</span>
+    }
+
+    @Override
+    protected HisConsultationDTO doGetConsultation(String consultationId) {
+<span class="nc" id="L115">        simulateDelay(100);</span>
+<span class="nc" id="L116">        return consultationStore.get(consultationId);</span>
+    }
+
+    @Override
+    protected boolean doTestConnection() {
+<span class="nc" id="L121">        simulateDelay(50);</span>
+<span class="nc" id="L122">        return true;</span>
+    }
+
+    /**
+     * 模拟网络延迟
+     */
+    private void simulateDelay(long millis) {
+        try {
+<span class="nc" id="L130">            Thread.sleep(millis);</span>
+<span class="nc" id="L131">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L132">            Thread.currentThread().interrupt();</span>
+        }
+<span class="nc" id="L134">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

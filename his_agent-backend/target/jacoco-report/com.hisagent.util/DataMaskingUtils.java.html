@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DataMaskingUtils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.util</a> &gt; <span class="el_source">DataMaskingUtils.java</span></div><h1>DataMaskingUtils.java</h1><pre class="source lang-java linenums">package com.hisagent.util;
+
+import java.util.regex.Pattern;
+
+/**
+ * 数据脱敏工具类
+ */
+public class DataMaskingUtils {
+
+<span class="fc" id="L10">    private static final Pattern PHONE_PATTERN = Pattern.compile(&quot;(\\d{3})\\d{4}(\\d{4})&quot;);</span>
+<span class="fc" id="L11">    private static final Pattern ID_CARD_PATTERN = Pattern.compile(&quot;(\\d{6})\\d{8}(\\w{4})&quot;);</span>
+<span class="fc" id="L12">    private static final Pattern NAME_PATTERN = Pattern.compile(&quot;([\\u4e00-\\u9fa5]{1})[\\u4e00-\\u9fa5]+([\\u4e00-\\u9fa5]{0,1})$&quot;);</span>
+
+    private DataMaskingUtils() {
+        // 工具类，禁止实例化
+    }
+
+    /**
+     * 脱敏手机号
+     * 13812345678 -&gt; 138****5678
+     */
+    public static String maskPhone(String phone) {
+<span class="fc bfc" id="L23" title="All 4 branches covered.">        if (phone == null || phone.length() != 11) {</span>
+<span class="fc" id="L24">            return phone;</span>
+        }
+<span class="fc" id="L26">        return PHONE_PATTERN.matcher(phone).replaceAll(&quot;$1****$2&quot;);</span>
+    }
+
+    /**
+     * 脱敏身份证号
+     * 110101199001011234 -&gt; 110101********1234
+     */
+    public static String maskIdCard(String idCard) {
+<span class="pc bpc" id="L34" title="1 of 6 branches missed.">        if (idCard == null || (idCard.length() != 18 &amp;&amp; idCard.length() != 15)) {</span>
+<span class="fc" id="L35">            return idCard;</span>
+        }
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if (idCard.length() == 18) {</span>
+<span class="fc" id="L38">            return ID_CARD_PATTERN.matcher(idCard).replaceAll(&quot;$1********$2&quot;);</span>
+        }
+        // 15 位身份证
+<span class="nc" id="L41">        return idCard.replaceAll(&quot;(\\d{6})\\d{5}(\\w{4})&quot;, &quot;$1*****$2&quot;);</span>
+    }
+
+    /**
+     * 脱敏姓名
+     * 张三 -&gt; 张*
+     * 张三丰 -&gt; 张*丰
+     * 欧阳建华 -&gt; 欧阳*华
+     */
+    public static String maskName(String name) {
+<span class="pc bpc" id="L51" title="1 of 4 branches missed.">        if (name == null || name.isEmpty()) {</span>
+<span class="fc" id="L52">            return name;</span>
+        }
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (name.length() == 1) {</span>
+<span class="fc" id="L55">            return &quot;*&quot;;</span>
+        }
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (name.length() == 2) {</span>
+<span class="fc" id="L58">            return name.charAt(0) + &quot;*&quot;;</span>
+        }
+        // 处理复姓
+<span class="pc bpc" id="L61" title="2 of 6 branches missed.">        if (name.startsWith(&quot;欧阳&quot;) || name.startsWith(&quot;司马&quot;) || name.startsWith(&quot;上官&quot;) || </span>
+<span class="pc bpc" id="L62" title="3 of 6 branches missed.">            name.startsWith(&quot;诸葛&quot;) || name.startsWith(&quot;东方&quot;) || name.startsWith(&quot;西门&quot;)) {</span>
+<span class="fc" id="L63">            return name.substring(0, 2) + &quot;*&quot; + name.charAt(name.length() - 1);</span>
+        }
+<span class="fc" id="L65">        return name.charAt(0) + &quot;*&quot; + name.charAt(name.length() - 1);</span>
+    }
+
+    /**
+     * 脱敏邮箱
+     * test@example.com -&gt; t**t@example.com
+     */
+    public static String maskEmail(String email) {
+<span class="pc bpc" id="L73" title="1 of 4 branches missed.">        if (email == null || !email.contains(&quot;@&quot;)) {</span>
+<span class="fc" id="L74">            return email;</span>
+        }
+<span class="fc" id="L76">        String[] parts = email.split(&quot;@&quot;);</span>
+<span class="fc" id="L77">        String username = parts[0];</span>
+<span class="fc" id="L78">        String domain = parts[1];</span>
+        
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (username.length() &lt;= 2) {</span>
+<span class="fc" id="L81">            return username.charAt(0) + &quot;*&quot; + &quot;@&quot; + domain;</span>
+        }
+<span class="fc" id="L83">        return username.charAt(0) + &quot;***&quot; + username.charAt(username.length() - 1) + &quot;@&quot; + domain;</span>
+    }
+
+    /**
+     * 脱敏地址
+     * 北京市海淀区中关村大街 1 号 -&gt; 北京市海淀区****
+     */
+    public static String maskAddress(String address) {
+<span class="pc bpc" id="L91" title="1 of 4 branches missed.">        if (address == null || address.isEmpty()) {</span>
+<span class="fc" id="L92">            return address;</span>
+        }
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (address.length() &lt;= 6) {</span>
+<span class="fc" id="L95">            return address.substring(0, Math.min(2, address.length())) + &quot;***&quot;;</span>
+        }
+<span class="fc" id="L97">        return address.substring(0, 6) + &quot;****&quot;;</span>
+    }
+
+    /**
+     * 部分脱敏（保留前后各 N 位）
+     */
+    public static String maskPartial(String value, int prefixLength, int suffixLength) {
+<span class="pc bpc" id="L104" title="1 of 4 branches missed.">        if (value == null || value.isEmpty()) {</span>
+<span class="fc" id="L105">            return value;</span>
+        }
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (value.length() &lt;= prefixLength + suffixLength) {</span>
+<span class="fc" id="L108">            return &quot;*&quot;.repeat(value.length());</span>
+        }
+<span class="fc" id="L110">        return value.substring(0, prefixLength) + </span>
+<span class="fc" id="L111">               &quot;*&quot;.repeat(value.length() - prefixLength - suffixLength) + </span>
+<span class="fc" id="L112">               value.substring(value.length() - suffixLength);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

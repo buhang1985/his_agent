@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BaseHisAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">his-agent-backend</a> &gt; <a href="index.source.html" class="el_package">com.hisagent.his.adapter</a> &gt; <span class="el_source">BaseHisAdapter.java</span></div><h1>BaseHisAdapter.java</h1><pre class="source lang-java linenums">package com.hisagent.his.adapter;
+
+import com.hisagent.dto.his.HisPatientDTO;
+import com.hisagent.dto.his.HisConsultationDTO;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
+/**
+ * HIS 适配器基类
+ * 提供通用的实现和错误处理
+ */
+<span class="fc" id="L13">@Slf4j</span>
+public abstract class BaseHisAdapter implements HisAdapter {
+
+    protected final String vendorName;
+    protected final String baseUrl;
+    protected final int timeout;
+
+<span class="fc" id="L20">    protected BaseHisAdapter(String vendorName, String baseUrl, int timeout) {</span>
+<span class="fc" id="L21">        this.vendorName = vendorName;</span>
+<span class="fc" id="L22">        this.baseUrl = baseUrl;</span>
+<span class="fc" id="L23">        this.timeout = timeout;</span>
+<span class="fc" id="L24">    }</span>
+
+    @Override
+    public String getName() {
+<span class="fc" id="L28">        return vendorName;</span>
+    }
+
+    @Override
+    public boolean supports(String hisVendor) {
+<span class="nc" id="L33">        return vendorName.equalsIgnoreCase(hisVendor);</span>
+    }
+
+    @Override
+    public HisPatientDTO getPatient(String patientId) {
+<span class="nc" id="L38">        log.info(&quot;{} HIS: Getting patient {}&quot;, vendorName, patientId);</span>
+        try {
+<span class="nc" id="L40">            return doGetPatient(patientId);</span>
+<span class="nc" id="L41">        } catch (Exception e) {</span>
+<span class="nc" id="L42">            log.error(&quot;{} HIS: Failed to get patient {}&quot;, vendorName, patientId, e);</span>
+<span class="nc" id="L43">            throw new RuntimeException(&quot;Failed to get patient from &quot; + vendorName + &quot; HIS&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public HisPatientDTO getPatientByIdCard(String idCard) {
+<span class="nc" id="L49">        log.info(&quot;{} HIS: Getting patient by ID card {}&quot;, vendorName, idCard);</span>
+        try {
+<span class="nc" id="L51">            return doGetPatientByIdCard(idCard);</span>
+<span class="nc" id="L52">        } catch (Exception e) {</span>
+<span class="nc" id="L53">            log.error(&quot;{} HIS: Failed to get patient by ID card {}&quot;, vendorName, idCard, e);</span>
+<span class="nc" id="L54">            throw new RuntimeException(&quot;Failed to get patient by ID card from &quot; + vendorName + &quot; HIS&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public List&lt;HisPatientDTO&gt; searchPatients(String keyword) {
+<span class="nc" id="L60">        log.info(&quot;{} HIS: Searching patients with keyword {}&quot;, vendorName, keyword);</span>
+        try {
+<span class="nc" id="L62">            return doSearchPatients(keyword);</span>
+<span class="nc" id="L63">        } catch (Exception e) {</span>
+<span class="nc" id="L64">            log.error(&quot;{} HIS: Failed to search patients {}&quot;, vendorName, keyword, e);</span>
+<span class="nc" id="L65">            throw new RuntimeException(&quot;Failed to search patients from &quot; + vendorName + &quot; HIS&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public HisConsultationDTO createConsultation(HisConsultationDTO consultation) {
+<span class="nc" id="L71">        log.info(&quot;{} HIS: Creating consultation for patient {}&quot;, vendorName, consultation.getPatientId());</span>
+        try {
+<span class="nc" id="L73">            return doCreateConsultation(consultation);</span>
+<span class="nc" id="L74">        } catch (Exception e) {</span>
+<span class="nc" id="L75">            log.error(&quot;{} HIS: Failed to create consultation&quot;, vendorName, e);</span>
+<span class="nc" id="L76">            throw new RuntimeException(&quot;Failed to create consultation in &quot; + vendorName + &quot; HIS&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public HisConsultationDTO updateConsultation(HisConsultationDTO consultation) {
+<span class="nc" id="L82">        log.info(&quot;{} HIS: Updating consultation {}&quot;, vendorName, consultation.getId());</span>
+        try {
+<span class="nc" id="L84">            return doUpdateConsultation(consultation);</span>
+<span class="nc" id="L85">        } catch (Exception e) {</span>
+<span class="nc" id="L86">            log.error(&quot;{} HIS: Failed to update consultation {}&quot;, vendorName, consultation.getId(), e);</span>
+<span class="nc" id="L87">            throw new RuntimeException(&quot;Failed to update consultation in &quot; + vendorName + &quot; HIS&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public HisConsultationDTO getConsultation(String consultationId) {
+<span class="nc" id="L93">        log.info(&quot;{} HIS: Getting consultation {}&quot;, vendorName, consultationId);</span>
+        try {
+<span class="nc" id="L95">            return doGetConsultation(consultationId);</span>
+<span class="nc" id="L96">        } catch (Exception e) {</span>
+<span class="nc" id="L97">            log.error(&quot;{} HIS: Failed to get consultation {}&quot;, vendorName, consultationId, e);</span>
+<span class="nc" id="L98">            throw new RuntimeException(&quot;Failed to get consultation from &quot; + vendorName + &quot; HIS&quot;, e);</span>
+        }
+    }
+
+    @Override
+    public boolean testConnection() {
+<span class="nc" id="L104">        log.info(&quot;{} HIS: Testing connection to {}&quot;, vendorName, baseUrl);</span>
+        try {
+<span class="nc" id="L106">            return doTestConnection();</span>
+<span class="nc" id="L107">        } catch (Exception e) {</span>
+<span class="nc" id="L108">            log.error(&quot;{} HIS: Connection test failed&quot;, vendorName, e);</span>
+<span class="nc" id="L109">            return false;</span>
+        }
+    }
+
+    // 子类必须实现的抽象方法
+
+    protected abstract HisPatientDTO doGetPatient(String patientId);
+
+    protected abstract HisPatientDTO doGetPatientByIdCard(String idCard);
+
+    protected abstract List&lt;HisPatientDTO&gt; doSearchPatients(String keyword);
+
+    protected abstract HisConsultationDTO doCreateConsultation(HisConsultationDTO consultation);
+
+    protected abstract HisConsultationDTO doUpdateConsultation(HisConsultationDTO consultation);
+
+    protected abstract HisConsultationDTO doGetConsultation(String consultationId);
+
+    protected abstract boolean doTestConnection();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
