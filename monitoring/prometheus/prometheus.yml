@@ -35,29 +35,27 @@ scrape_configs:
         labels:
           application: 'his-agent'
           environment: 'dev'
-    metric_relabel_configs:
-      # 只保留我们关心的指标
-      - source_labels: [__name__]
-        regex: 'jvm_.*|http_server_.*|hikaricp_.*|process_.*|resilience4j_.*|his_.*'
-        action: keep
 
-  # 系统监控（Node Exporter）
+  # Node Exporter（系统监控）
   - job_name: 'node'
     static_configs:
       - targets: ['localhost:9100']
         labels:
           instance: 'his-agent-server'
 
-  # Redis 监控
+  # MySQL Exporter
+  - job_name: 'mysql'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['localhost:9104']
+        labels:
+          service: 'mysql'
+          instance: 'mysql-local'
+  
+  # Redis Exporter
   - job_name: 'redis'
     static_configs:
-      - targets: ['localhost:6379']
+      - targets: ['localhost:9121']
         labels:
+          service: 'redis'
           instance: 'redis-local'
-
-  # MySQL 监控
-  - job_name: 'mysql'
-    static_configs:
-      - targets: ['localhost:3306']
-        labels:
-          instance: 'mysql-local'
