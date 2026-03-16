@@ -14,6 +14,11 @@ const routes = [
     component: TestPage,
   },
   {
+    path: '/test/voice',
+    name: 'VoiceConsultationTest',
+    component: () => import('./views/VoiceConsultationTest.vue'),
+  },
+  {
     path: '/__dev',
     name: 'DevPortal',
     component: () => import('./views/DevPortal.vue'),

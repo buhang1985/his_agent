@@ -1,15 +1,21 @@
 package com.hisagent.controller;
 
 import com.hisagent.dto.ApiResponse;
+import com.hisagent.dto.voice.GenerateSoapRequest;
+import com.hisagent.dto.voice.GenerateSoapResponse;
+import com.hisagent.dto.voice.SoapNoteDTO;
 import com.hisagent.model.Patient;
 import com.hisagent.repository.PatientRepository;
 import com.hisagent.cache.CacheKeyBuilder;
 import com.hisagent.cache.CacheUtils;
+import com.hisagent.service.llm.SoapNoteGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +32,7 @@ public class TestController {
 
     private final PatientRepository patientRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final SoapNoteGeneratorService soapNoteGeneratorService;
 
     /**
      * 测试数据库连接
@@ -372,6 +379,34 @@ public class TestController {
         } catch (Exception e) {
             log.error("综合测试失败", e);
             return ApiResponse.error(500, "综合测试失败：" + e.getMessage());
+        }
+    }
+
+    // ==================== 语音测试接口 ====================
+
+    /**
+     * 生成 SOAP 病历
+     */
+    @PostMapping("/voice/generate")
+    public ApiResponse<GenerateSoapResponse> generateSoapNote(@RequestBody GenerateSoapRequest request) {
+        log.info("生成 SOAP 病历，转写长度：{}", request.getTranscript().length());
+
+        try {
+            SoapNoteDTO soapNote = soapNoteGeneratorService.generate(request.getTranscript());
+
+            GenerateSoapResponse response = GenerateSoapResponse.builder()
+                .recordId(UUID.randomUUID().toString())
+                .soap(soapNote)
+                .confidence(0.85)
+                .lowConfidenceFields(new ArrayList<>())
+                .generatedAt(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .build();
+
+            return ApiResponse.success(response);
+
+        } catch (Exception e) {
+            log.error("生成 SOAP 病历失败", e);
+            return ApiResponse.error(500, "生成失败：" + e.getMessage());
         }
     }
 }
