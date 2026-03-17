@@ -31,37 +31,41 @@ public class SoapNoteGeneratorService {
 
     private SoapNoteDTO generateFromKeywords(String transcript) {
         String chiefComplaint = "待补充";
+        String hpi = "待补充";
         String diagnosis = "待诊断";
-        List<String> tests = Arrays.asList("血常规", "C 反应蛋白");
-        String treatment = "对症治疗，休息，多饮水";
+        String physicalExam = "待检查";
+        String treatment = "对症治疗";
         String advice = "如有不适随诊";
 
         // 简单关键词匹配
         if (transcript.contains("头痛") || transcript.contains("发烧")) {
             chiefComplaint = "头痛、发热";
+            hpi = transcript;
             diagnosis = "上呼吸道感染";
-            tests = Arrays.asList("血常规", "C 反应蛋白", "新冠病毒抗原检测");
+            physicalExam = "咽部充血，扁桃体无肿大";
             treatment = "退热治疗，对症治疗，休息";
             advice = "多饮水，如有呼吸困难及时就医";
         }
 
         if (transcript.contains("咳嗽")) {
             chiefComplaint = chiefComplaint + "、咳嗽";
-            tests = Arrays.asList("血常规", "胸部 X 光", "C 反应蛋白");
+            physicalExam = physicalExam + "，双肺呼吸音粗，未闻及干湿啰音";
         }
 
         if (transcript.contains("腹痛") || transcript.contains("肚子痛")) {
             chiefComplaint = "腹痛";
+            hpi = transcript;
             diagnosis = "急性胃肠炎？";
-            tests = Arrays.asList("血常规", "腹部 B 超", "大便常规");
+            physicalExam = "腹软，脐周压痛，无反跳痛";
             treatment = "禁食，补液，对症治疗";
             advice = "清淡饮食，如有加重及时就医";
         }
 
         if (transcript.contains("胸痛") || transcript.contains("胸闷")) {
             chiefComplaint = "胸痛、胸闷";
+            hpi = transcript;
             diagnosis = "冠心病？心绞痛？";
-            tests = Arrays.asList("心电图", "心肌酶谱", "冠状动脉 CT");
+            physicalExam = "心率 80 次/分，律齐，各瓣膜听诊区未闻及杂音";
             treatment = "硝酸甘油舌下含服，休息";
             advice = "避免剧烈运动，如有持续胸痛立即就医";
         }
@@ -69,18 +73,18 @@ public class SoapNoteGeneratorService {
         return SoapNoteDTO.builder()
             .subjective(SoapNoteDTO.Subjective.builder()
                 .chiefComplaint(chiefComplaint)
-                .historyOfPresentIllness(transcript)
+                .historyOfPresentIllness(hpi)
                 .build())
             .objective(SoapNoteDTO.Objective.builder()
                 .vitalSigns("待测量")
-                .physicalExamFindings("待检查")
+                .physicalExamFindings(physicalExam)
                 .build())
             .assessment(SoapNoteDTO.Assessment.builder()
                 .primaryDiagnosis(diagnosis)
                 .differentialDiagnoses(Arrays.asList("待鉴别"))
                 .build())
             .plan(SoapNoteDTO.Plan.builder()
-                .diagnosticTests(tests)
+                .diagnosticTests(Arrays.asList("血常规", "C 反应蛋白"))
                 .treatment(treatment)
                 .advice(advice)
                 .build())
