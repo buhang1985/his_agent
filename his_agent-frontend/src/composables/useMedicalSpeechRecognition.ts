@@ -6,13 +6,19 @@ interface UseSpeechRecognitionOptions {
   appId: string;
   apiKey: string;
   domain?: 'medical' | 'general';
+  continuousTimeout?: number;
   onTranscriptUpdate?: (text: string, isFinal: boolean) => void;
 }
 
 export function useMedicalSpeechRecognition(options: UseSpeechRecognitionOptions) {
-  const { appId, apiKey, domain, onTranscriptUpdate } = options;
+  const { appId, apiKey, domain, continuousTimeout = 3000, onTranscriptUpdate } = options;
 
-  const service = new IFlytekService({ appId, apiKey, domain });
+  const service = new IFlytekService({ 
+    appId, 
+    apiKey,
+    domain,
+    continuousTimeout 
+  });
 
   const transcript = ref('');
   const segments = ref<ConversationSegment[]>([]);

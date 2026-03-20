@@ -67,31 +67,36 @@
               </el-button>
             </div>
 
-            <!-- 转写文本展示 -->
-            <div v-if="transcript" class="transcript-section">
-              <div class="transcript-header">
-                <span class="transcript-title">
-                  <el-icon><document-copy /></el-icon>
-                  语音转写
-                </span>
-                <el-tag size="small">{{ segments.length }} 段对话</el-tag>
-              </div>
-              
-              <div class="transcript-content">
-                <div
-                  v-for="segment in segments"
-                  :key="segment.id"
-                  class="transcript-segment"
-                  :class="segment.speaker"
-                >
-                  <el-tag :type="segment.speaker === 'doctor' ? 'primary' : 'info'" size="small">
-                    {{ segment.speaker === 'doctor' ? '医生' : '患者' }}
-                  </el-tag>
-                  <span class="segment-text">{{ segment.text }}</span>
-                  <span class="segment-time">{{ formatTime(segment.timestamp) }}</span>
+              <!-- 转写文本展示 -->
+              <div v-if="transcript || isRecording" class="transcript-section">
+                <div class="transcript-header">
+                  <span class="transcript-title">
+                    <el-icon><document-copy /></el-icon>
+                    语音转写
+                  </span>
+                  <el-tag size="small">{{ segments.length }} 段对话</el-tag>
+                </div>
+                
+                <div class="transcript-content">
+                  <div
+                    v-for="segment in segments"
+                    :key="segment.id"
+                    class="transcript-segment"
+                    :class="segment.speaker"
+                  >
+                    <el-tag :type="segment.speaker === 'doctor' ? 'primary' : 'info'" size="small">
+                      {{ segment.speaker === 'doctor' ? '医生' : '患者' }}
+                    </el-tag>
+                    <span class="segment-text">{{ segment.text }}</span>
+                    <span class="segment-time">{{ formatTime(segment.timestamp) }}</span>
+                  </div>
+                  <!-- 显示实时转写内容 -->
+                  <div v-if="isRecording && transcript" class="transcript-segment doctor">
+                    <el-tag type="primary" size="small">医生</el-tag>
+                    <span class="segment-text realtime">{{ transcript }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <!-- 错误提示 -->
             <el-alert
@@ -215,12 +220,12 @@
               <!-- 诊疗计划 -->
               <RecordSection
                 ref="tpRef"
-                v-model="medicalRecord.treatmentPlan.medications.join('; ')"
+                v-model="treatmentPlanText"
                 title="诊疗计划"
                 icon="Setting"
                 placeholder="进一步检查、药物治疗、非药物治疗、随访建议..."
                 :required="true"
-                @writeback="handleSectionWriteback"
+                @writeback="handleTreatmentPlanWriteback"
               />
             </el-form>
           </el-card>
@@ -284,6 +289,7 @@ const {
   appId,
   apiKey,
   domain: 'medical',
+  continuousTimeout: 2000,
   onTranscriptUpdate: (text, isFinal) => {
     if (isFinal) {
       addLog(`识别结果：${text}`);
@@ -292,7 +298,7 @@ const {
 });
 
 const isRecording = computed(() => status.value === 'recording');
-const connecting = computed(() => status.value === 'connected');
+const connecting = computed(() => status.value === 'processing');
 const debugLogs = ref<string[]>([]);
 const recordingStartTime = ref<number>(0);
 const recordingDuration = ref<number>(0);
@@ -361,6 +367,14 @@ const hasContent = computed(() => {
     medicalRecord.value.historyOfPresentIllness.onset ||
     medicalRecord.value.physicalExamination.generalExam ||
     medicalRecord.value.preliminaryDiagnosis.primaryDiagnosis;
+});
+
+// 诊疗计划文本（用于 v-model 双向绑定）
+const treatmentPlanText = computed({
+  get: () => medicalRecord.value.treatmentPlan.medications.join('; '),
+  set: (value: string) => {
+    medicalRecord.value.treatmentPlan.medications = value.split(';').map(s => s.trim()).filter(s => s);
+  }
 });
 
 // 方法
@@ -441,7 +455,33 @@ const handleGenerateRecord = async () => {
   }
 };
 
-const handleSectionWriteback = async (section: string, content: string) => {
+const handleClearAll = async () => {
+  try {
+    await ElMessageBox.confirm('确定要清空所有病历内容吗？', '提示', {
+      type: 'warning',
+    });
+    
+    medicalRecord.value = {
+      chiefComplaint: { content: '', duration: '' },
+      historyOfPresentIllness: { onset: '', symptoms: '', progression: '', treatment: '' },
+      pastMedicalHistory: { pastDiseases: '', surgeries: '', allergies: '', medications: '' },
+      physicalExamination: { vitalSigns: {}, generalExam: '', systemExams: {} },
+      auxiliaryExamination: { labTests: [], imagingTests: [], otherTests: [], results: '' },
+      preliminaryDiagnosis: { primaryDiagnosis: '', icdCode: '', confidence: 0 },
+      differentialDiagnoses: [],
+      treatmentPlan: { furtherTests: [], medications: [], nonDrugTreatment: '', followup: '', advice: '' },
+      isCompleted: false,
+      isSigned: false,
+    };
+    
+    addLog('已清空全部病历');
+    ElMessage.success('已清空全部病历');
+  } catch {
+    // 取消操作
+  }
+};
+
+const handleSectionWriteback = async (section: string, _content: string) => {
   addLog(`回写 ${section} 到 HIS...`);
   
   try {
@@ -458,6 +498,10 @@ const handleSectionWriteback = async (section: string, content: string) => {
     writebackDialogVisible.value = true;
     addLog(`${section} 回写失败`);
   }
+};
+
+const handleTreatmentPlanWriteback = async (_content: string) => {
+  await handleSectionWriteback('诊疗计划', _content);
 };
 
 const handleWritebackAll = async () => {
@@ -628,6 +672,11 @@ onUnmounted(() => {
   flex: 1;
   line-height: 1.6;
   color: #303133;
+}
+
+.segment-text.realtime {
+  font-style: italic;
+  color: #909399;
 }
 
 .segment-time {

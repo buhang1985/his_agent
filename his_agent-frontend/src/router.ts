@@ -19,6 +19,11 @@ const routes = [
     component: () => import('./views/VoiceConsultationTest.vue'),
   },
   {
+    path: '/test/simple-voice',
+    name: 'SimpleVoiceTest',
+    component: () => import('./views/SimpleVoiceTest.vue'),
+  },
+  {
     path: '/__dev',
     name: 'DevPortal',
     component: () => import('./views/DevPortal.vue'),
