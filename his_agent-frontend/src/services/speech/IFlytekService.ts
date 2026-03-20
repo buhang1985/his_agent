@@ -212,9 +212,6 @@ export class IFlytekService {
         }
         return;
       }
-        }
-        return;
-      }
 
       if (action === 'result') {
         console.log('[处理识别结果] data:', response.data);
