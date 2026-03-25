@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * 分布式锁工具类
- * 基于 Redisson 实现分布式锁
+ * 分布式锁工具类 - 无 Redis 版本
+ * 当 RedissonClient 为 null 时，使用本地锁
  */
 @Slf4j
 @Component
@@ -26,11 +26,6 @@ public class DistributedLockUtil {
 
     /**
      * 执行带分布式锁的操作
-     *
-     * @param lockKey 锁键
-     * @param action  要执行的操作
-     * @param <T>     返回值类型
-     * @return 操作结果
      */
     public <T> T executeWithLock(String lockKey, Supplier<T> action) {
         return executeWithLock(lockKey, DEFAULT_WAIT_TIME, DEFAULT_LEASE_TIME, TimeUnit.SECONDS, action);
@@ -38,16 +33,14 @@ public class DistributedLockUtil {
 
     /**
      * 执行带分布式锁的操作
-     *
-     * @param lockKey     锁键
-     * @param waitTime    等待时间
-     * @param leaseTime   锁持有时间
-     * @param timeUnit    时间单位
-     * @param action      要执行的操作
-     * @param <T>         返回值类型
-     * @return 操作结果
      */
     public <T> T executeWithLock(String lockKey, long waitTime, long leaseTime, TimeUnit timeUnit, Supplier<T> action) {
+        // 如果 RedissonClient 为空，使用本地锁
+        if (redissonClient == null) {
+            log.debug("RedissonClient 为空，使用本地锁: {}", lockKey);
+            return executeWithLocalLock(lockKey, action);
+        }
+
         String fullLockKey = LOCK_PREFIX + lockKey;
         RLock lock = redissonClient.getLock(fullLockKey);
         boolean isLocked = false;
@@ -55,29 +48,35 @@ public class DistributedLockUtil {
         try {
             isLocked = lock.tryLock(waitTime, leaseTime, timeUnit);
             if (isLocked) {
-                log.debug("Lock acquired: {}", fullLockKey);
+                log.debug("分布式锁获取成功: {}", fullLockKey);
                 return action.get();
             } else {
-                log.warn("Failed to acquire lock: {}", fullLockKey);
+                log.warn("分布式锁获取失败: {}", fullLockKey);
                 throw new RuntimeException("Failed to acquire distributed lock: " + fullLockKey);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("Lock interrupted: {}", fullLockKey, e);
+            log.error("分布式锁中断: {}", fullLockKey, e);
             throw new RuntimeException("Distributed lock interrupted", e);
         } finally {
             if (isLocked && lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                log.debug("Lock released: {}", fullLockKey);
+                log.debug("分布式锁释放: {}", fullLockKey);
             }
         }
     }
 
     /**
+     * 本地锁实现（当 Redis 不可用时）
+     */
+    private <T> T executeWithLocalLock(String lockKey, Supplier<T> action) {
+        synchronized (DistributedLockUtil.class) {
+            return action.get();
+        }
+    }
+
+    /**
      * 执行带分布式锁的操作（无返回值）
-     *
-     * @param lockKey 锁键
-     * @param action  要执行的操作
      */
     public void executeWithLock(String lockKey, Runnable action) {
         executeWithLock(lockKey, () -> {
@@ -88,11 +87,12 @@ public class DistributedLockUtil {
 
     /**
      * 尝试获取锁（非阻塞）
-     *
-     * @param lockKey 锁键
-     * @return true 如果获取成功
      */
     public boolean tryLock(String lockKey) {
+        if (redissonClient == null) {
+            log.debug("RedissonClient 为空，本地锁已获取: {}", lockKey);
+            return true;
+        }
         String fullLockKey = LOCK_PREFIX + lockKey;
         RLock lock = redissonClient.getLock(fullLockKey);
         return lock.tryLock();
@@ -100,10 +100,12 @@ public class DistributedLockUtil {
 
     /**
      * 释放锁
-     *
-     * @param lockKey 锁键
      */
     public void unlock(String lockKey) {
+        if (redissonClient == null) {
+            log.debug("RedissonClient 为空，本地锁已释放: {}", lockKey);
+            return;
+        }
         String fullLockKey = LOCK_PREFIX + lockKey;
         RLock lock = redissonClient.getLock(fullLockKey);
         if (lock.isHeldByCurrentThread()) {
