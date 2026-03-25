@@ -2,14 +2,12 @@ spring:
   application:
     name: his-agent-backend
   
-  # MySQL 数据源配置
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
     username: sa
     password: 
     driver-class-name: org.h2.Driver
     
-    # HikariCP 连接池配置
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -18,35 +16,25 @@ spring:
       max-lifetime: 1800000
       pool-name: HisAgentHikariPool
   
-  # JPA 配置
   jpa:
     hibernate:
-      ddl-auto: create-drop  # Demo 使用，自动创建表
+      ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
         format_sql: false
         dialect: org.hibernate.dialect.H2Dialect
   
-  # Flyway 配置
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    validate-on-migrate: true  # 严格验证迁移脚本
-    clean-disabled: true  # 生产环境禁用 clean
+    validate-on-migrate: true
+    clean-disabled: true
     encoding: UTF-8
     placeholder-prefix: "${"
     placeholder-suffix: "}"
 
-# MySQL 慢查询日志配置（需要在 MySQL 配置文件中设置）
-# my.cnf:
-#   slow_query_log = 1
-#   slow_query_log_file = /var/log/mysql/slow.log
-#   long_query_time = 2  # 超过 2 秒的查询记录为慢查询
-#   log_queries_not_using_indexes = 1
-  
-  # Redis 配置
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -61,15 +49,17 @@ spring:
           min-idle: 0
           max-wait: -1ms
 
-  # Spring AI 配置
+  cache:
+    type: simple
+
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY:demo-key}
-      base-url: ${OPENAI_BASE_URL:http://localhost:11434/v1}
+      api-key: ${OPENAI_API_KEY:sk-sp-758abbba5db646c79da0572e8e694b5e}
+      base-url: ${OPENAI_BASE_URL:https://coding.dashscope.aliyuncs.com/v1}
       chat:
         enabled: true
         options:
-          model: ${LLM_MODEL:qwen2.5:7b}
+          model: ${LLM_MODEL:qwen3.5-plus}
           temperature: 0.7
     anthropic:
       api-key: ${ANTHROPIC_API_KEY:}
@@ -78,18 +68,15 @@ spring:
           model: claude-sonnet-4-20250514
           temperature: 0.7
 
-# 服务器配置
 server:
   port: ${SERVER_PORT:8080}
 
-# 日志配置
 logging:
   level:
     root: INFO
     com.hisagent: DEBUG
     org.springframework.ai: DEBUG
 
-# Resilience4j 配置
 resilience4j:
   circuitbreaker:
     instances:
@@ -140,7 +127,6 @@ resilience4j:
         timeoutDuration: 30s
         cancelRunningFuture: true
 
-# 外部服务超时配置
 app:
   voice-service:
     connect-timeout: 5000
@@ -152,7 +138,6 @@ app:
     connect-timeout: 5000
     read-timeout: 15000
 
-# Actuator 配置
 management:
   endpoints:
     web:
@@ -168,7 +153,7 @@ management:
     db:
       enabled: true
     redis:
-      enabled: true
+      enabled: false
     circuitbreakers:
       enabled: true
   metrics:
@@ -179,7 +164,6 @@ management:
         enabled: true
         step: 60s
 
-# API 文档配置
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -187,7 +171,6 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: alpha
 
-# 讯飞 ASR 配置
 iflytek:
   app-id: 8bc8b3ca
   api-key: ef71686251f3f7b42bbb56c3d737f938

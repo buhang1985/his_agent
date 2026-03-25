@@ -24,6 +24,21 @@ const routes = [
     component: () => import('./views/SimpleVoiceTest.vue'),
   },
   {
+    path: '/test/xunfei-voice',
+    name: 'XunfeiVoiceTest',
+    component: () => import('./views/XunfeiVoiceTest.vue'),
+  },
+  {
+    path: '/test/backend-voice',
+    name: 'BackendProxyVoiceTest',
+    component: () => import('./views/BackendProxyVoiceTest.vue'),
+  },
+  {
+    path: '/test/voice-to-soap',
+    name: 'VoiceToSoapTest',
+    component: () => import('./views/VoiceToSoapTest.vue'),
+  },
+  {
     path: '/__dev',
     name: 'DevPortal',
     component: () => import('./views/DevPortal.vue'),

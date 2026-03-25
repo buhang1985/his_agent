@@ -331,8 +331,13 @@ export class IFlytekService {
       console.log('🎵 创建媒体流源...');
       const source = this.audioContext.createMediaStreamSource(this.mediaStream!);
 
-      console.log('🎵 创建 ScriptProcessor (1024)...');
-      this.scriptProcessor = this.audioContext.createScriptProcessor(1024, 1, 1);
+      console.log('🎵 创建 ScriptProcessor (4096)...');
+      this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+      
+      // 重要：保持对 scriptProcessor 的引用，防止被垃圾回收
+      // 参考：https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode/onaudioprocess
+      this.scriptProcessor.connect(this.audioContext.destination);
+      
       console.log('🎤 音频处理已启动，采样率：16000');
 
       let audioBuffer: Float32Array = new Float32Array(0);
@@ -340,25 +345,25 @@ export class IFlytekService {
       let processCount = 0;
       const samplesPer40ms = Math.floor(16000 * 0.04);
       
-        this.scriptProcessor.onaudioprocess = (event) => {
-          processCount++;
-          if (processCount <= 3 || processCount % 50 === 0) {
-            console.log(`📊 onaudioprocess 调用 #${processCount}`);
+      this.scriptProcessor.onaudioprocess = (event) => {
+        processCount++;
+        if (processCount <= 5 || processCount % 50 === 0) {
+          console.log(`📊 onaudioprocess 调用 #${processCount}, 输入数据长度：${event.inputBuffer.length}`);
+        }
+        
+        if (!this.audioReady) {
+          if (processCount <= 5) {
+            console.log('⏳ 音频未就绪，等待服务端确认...');
           }
-          
-          if (!this.audioReady) {
-            if (processCount <= 3) {
-              console.log('⏳ 音频未就绪，等待服务端确认...');
-            }
-            return;
+          return;
+        }
+        
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          if (processCount <= 5) {
+            console.warn('⚠️ WebSocket 未连接，跳过音频发送，readyState:', this.ws?.readyState);
           }
-          
-          if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            if (processCount <= 3) {
-              console.warn('⚠️ WebSocket 未连接，跳过音频发送，readyState:', this.ws?.readyState);
-            }
-            return;
-          }
+          return;
+        }
 
           const inputData = event.inputBuffer.getChannelData(0);
           
